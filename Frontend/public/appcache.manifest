@@ -1,0 +1,15 @@
+CACHE MANIFEST
+# Version number or comment
+
+CACHE:
+/rightAns.mp3
+/wrongAns.mp3
+/theme64.mp3
+/celebrate.mp3
+/theme-regis.mp3
+
+NETWORK:
+*
+
+FALLBACK:
+/fallback.html

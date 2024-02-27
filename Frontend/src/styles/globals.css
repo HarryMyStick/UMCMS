@@ -1,3 +1,98 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.mr-18 {
+    margin-right: 18px;
+}
+
+.bg-ln-custom {
+    background: linear-gradient(180deg, #2DBDE1 63%, #29B0D1 100%);
+}
+
+.bg_behind_form {
+    width: 500px;
+    height: 800px;
+}
+
+.ans_box_right {
+    background-color: #22C55E;
+    border-color: #D5D5D5;
+}
+
+.ans_box_wrong {
+    background-color: #FF6363;
+    border-color: #D5D5D5;
+}
+
+.bg_btn {
+    background-color: #222D64;
+}
+
+.btn_color {
+    background-color: #2DBDE1;
+}
+
+@font-face {
+    font-family: 'Montserrat-reg';
+    src: url('/font/Montserrat-Regular.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Montserrat-bold';
+    src: url('/font/Montserrat-Bold.ttf') format('truetype');
+}
+
+.msFont {
+    font-family: 'Montserrat-bold';
+    font-weight: bold;
+    color: #222D64;
+}
+
+.msFont-num {
+    font-family: 'Montserrat-bold';
+    font-weight: bold;
+    color: #222D64;
+    font-size: 25px;
+}
+
+.t-color {
+    color: #2DBDE1;
+}
+
+.t-color-yellow {
+    color: #F5B803;
+}
+
+.round-count {
+    border-color: #2DBDE1;
+    background-color: #2DBDE1;
+}
+
+.t-bold {
+    font-family: 'Montserrat-bold';
+    font-weight: bold;
+}
+
+.t-reg {
+    font-family: 'Montserrat-reg';
+    font-weight: bold;
+}
+
+.tc-blue {
+    color: #222D64;
+}
+
+.fixed_btn {
+    position: fixed;
+    bottom: 0;
+    height: 8vh;
+}
+
+.question-text {
+    font-family: 'Montserrat-bold';
+    font-weight: bold;
+    color: #222D64;
+    font-size: 18px;
+}

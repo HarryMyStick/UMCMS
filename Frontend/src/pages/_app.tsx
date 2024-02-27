@@ -7,13 +7,15 @@ const MyApp: AppType = ({ Component, pageProps }) => {
   return (
     <>
       <Head>
-        <title>Nestle Quiz Game</title>
+        <title>UMCMS</title>
         <meta
           name="description"
-          content="Nestle Quiz Game"
+          content="UMCMS"
         />
         <link rel="icon" href="/favicon.ico" />
-        <meta name="theme-color" content="#0A0" />
+        <meta name="theme-color" content="#251754" />
+        <meta name="apple-mobile-web-app-capable" content="yes"></meta>
+        <meta name="mobile-web-app-capable" content="yes"></meta>
         <link rel="manifest" href="/app.webmanifest" />
       </Head>
       <Component {...pageProps} />

@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { QuizModule } from './quizzes/quiz.module';
 
 @Module({
   imports: [
@@ -20,11 +18,8 @@ import { QuizModule } from './quizzes/quiz.module';
       database: process.env.DB_NAME,
       entities: ['dist/**/*.entity.js'],
       synchronize: true,
-      ssl: true,
     }),
     UsersModule,
-    AuthModule,
-    QuizModule,
   ],
   controllers: [],
   providers: [],
