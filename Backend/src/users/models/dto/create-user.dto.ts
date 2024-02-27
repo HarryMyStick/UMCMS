@@ -2,11 +2,11 @@ import { IsNotEmpty } from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty()
-  name: string;
+  username: string;
 
   @IsNotEmpty()
-  hospital: string;
+  password: string;
 
   @IsNotEmpty()
-  faculty: string;
+  role: string;
 }

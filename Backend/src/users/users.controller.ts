@@ -9,8 +9,13 @@ import { ApiTags } from '@nestjs/swagger';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
+  @Post('register') 
   createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.usersService.createUser(createUserDto);
+  }
+
+  @Post('login')
+  login(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.login(createUserDto);
   }
 }

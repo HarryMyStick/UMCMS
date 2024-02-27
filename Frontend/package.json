@@ -1,5 +1,5 @@
 {
-  "name": "react-duolingo",
+  "name": "react-umcms",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,9 +11,11 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.2.1",
     "dayjs": "^1.11.7",
+    "exceljs": "^4.4.0",
     "next": "^13.4.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-responsive-carousel": "^3.2.23",
     "zod": "^3.21.4",
     "zustand": "^4.3.8"
   },
