@@ -8,7 +8,7 @@ async function bootstrap() {
 
   app.use(
     cors({
-      origin: ['http://localhost:3000', 'https://nestle-game.vercel.app/'],
+      origin: ['http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       allowedHeaders: ['Content-Type', 'Authorization'],
       credentials: true,
@@ -16,8 +16,8 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
-    .setTitle('Nestle Game APIs')
-    .setDescription('Nestle Game API description')
+    .setTitle('UMCMS API')
+    .setDescription('UMCMS API description')
     .setVersion('1.0')
 
     .build();
