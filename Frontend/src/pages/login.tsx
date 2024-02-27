@@ -80,7 +80,7 @@ export const Login: NextPage = () => {
               void logIn();
             }}
           >
-            {'Login'}
+            {'LogIn'}
           </button>
         </div>
       </div>
