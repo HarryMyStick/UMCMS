@@ -7,13 +7,13 @@ import { CreateUserDto } from './models/dto/create-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private usersRepositiry: Repository<User>,
+    @InjectRepository(User) private usersRepository: Repository<User>,
   ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     const { username } = createUserDto;
 
-    const existingUser = await this.usersRepositiry.findOne({
+    const existingUser = await this.usersRepository.findOne({
       where: [{ username }],
     });
 
@@ -21,18 +21,19 @@ export class UsersService {
       return existingUser;
     }
 
-    const user = this.usersRepositiry.create(createUserDto);
+    const user = this.usersRepository.create(createUserDto);
     await user.save();
     return user;
   }
 
-  async login(createUserDto: CreateUserDto): Promise<User> {
+  async login(createUserDto: CreateUserDto): Promise<User | undefined> {
     const { username, password } = createUserDto;
-    const existingUser = await this.usersRepositiry.findOne({
-      where: [{ username, password }],
+  
+    const existingUser = await this.usersRepository.findOne({
+      where: { username, password },
+      relations: ['role']
     });
-    if (existingUser) {
-      return existingUser;
-    }
+  
+    return existingUser;
   }
 }
