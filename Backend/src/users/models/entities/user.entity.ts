@@ -3,9 +3,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+
+import { Role } from 'src/role/models/entities/role.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -18,14 +20,14 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
-  @Column()
-  role: string;
+  @ManyToOne(() => Role)
+  @JoinColumn({ name: 'role_id' }) 
+  role: Role; 
 
-  @Column()
-  @CreateDateColumn()
-  createdAt: Date;
+  // @Column()
+  // profile_id: string;
 
-  @Column()
-  @UpdateDateColumn()
-  updatedAt: Date;
+  // @Column()
+  // faculty_id: string;
 }
+
