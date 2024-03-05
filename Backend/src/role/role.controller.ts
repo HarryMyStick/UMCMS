@@ -7,11 +7,16 @@ import { ApiTags } from '@nestjs/swagger';
 @ApiTags('Role')
 @Controller('role')
 export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+  constructor(private readonly roleService: RoleService) { }
 
-  @Post('createRole') 
+  @Post('createRole')
   createRole(@Body() createRoleDto: CreateRoleDto): Promise<Role> {
     return this.roleService.createRole(createRoleDto);
+  }
+  
+  @Get('getRoles')
+  async getAllRoles(): Promise<Role[]> {
+    return this.roleService.getAllRoles();
   }
 
   @Get(':id')
@@ -19,7 +24,7 @@ export class RoleController {
     return this.roleService.getRoleById(id);
   }
 
-  @Get('name/:roleName')
+  @Get('byName/:roleName')
   async getRoleByName(@Param('roleName') roleName: string): Promise<Role> {
     return this.roleService.getRoleByName(roleName);
   }
