@@ -20,7 +20,6 @@ export class UsersService {
     if (existingUser) {
       return existingUser;
     }
-    createUserDto.role = 'user';
 
     const user = this.usersRepositiry.create(createUserDto);
     await user.save();
