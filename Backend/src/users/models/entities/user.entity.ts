@@ -3,16 +3,18 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  OneToOne,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
 
 import { Role } from 'src/role/models/entities/role.entity';
+import { Profile } from 'src/profile/models/entities/profile.entity';
 
 @Entity()
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  user_id: string;
 
   @Column()
   username: string;
@@ -22,10 +24,11 @@ export class User extends BaseEntity {
 
   @ManyToOne(() => Role)
   @JoinColumn({ name: 'role_id' }) 
-  role: Role; 
+  role: Role;
 
-  // @Column()
-  // profile_id: string;
+  @OneToOne(() => Profile)
+  @JoinColumn()
+  profile: Profile;
 
   // @Column()
   // faculty_id: string;

@@ -1,13 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './models/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './models/dto/create-user.dto';
+import { Role } from 'src/role/models/entities/role.entity';
+import { ProfileService } from 'src/profile/profile.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(Role) private roleRepository: Repository<Role>,
+    private readonly profileService: ProfileService,
   ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -21,8 +25,27 @@ export class UsersService {
       return existingUser;
     }
 
-    const user = this.usersRepository.create(createUserDto);
+    const roleId: string = '8195c61a-aa59-421f-bcda-d832243efe86';
+    const role = await this.roleRepository.findOne({
+      where: { role_id: roleId },
+    });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      role: role,
+    });
+
     await user.save();
+
+    const profile = await this.profileService.createProfile(user);
+
+    user.profile = profile; 
+    await user.save(); 
+
     return user;
   }
 
