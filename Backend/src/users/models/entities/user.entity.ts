@@ -10,6 +10,7 @@ import {
 
 import { Role } from 'src/role/models/entities/role.entity';
 import { Profile } from 'src/profile/models/entities/profile.entity';
+import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 
 @Entity()
 export class User extends BaseEntity {
@@ -22,15 +23,16 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
+  @OneToOne(() => Profile)
+  @JoinColumn({ name: 'user_id', referencedColumnName: 'user_id' }) 
+  profile: Profile;
+
   @ManyToOne(() => Role)
   @JoinColumn({ name: 'role_id' }) 
   role: Role;
 
-  @OneToOne(() => Profile)
-  @JoinColumn()
-  profile: Profile;
-
-  // @Column()
-  // faculty_id: string;
+  @OneToOne(() => Faculty)
+  @JoinColumn({ name: 'faculty_id' })
+  faculty_id: Faculty;
 }
 
