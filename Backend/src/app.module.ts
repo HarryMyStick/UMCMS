@@ -4,6 +4,8 @@ import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { RoleModule } from './role/role.module';
+import { ProfileModule } from './profile/profile.module';
+import { FacultyModule } from './faculty/faculty.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { RoleModule } from './role/role.module';
     }),
     UsersModule,
     RoleModule,
+    ProfileModule,
+    FacultyModule,
   ],
   controllers: [],
   providers: [],

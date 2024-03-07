@@ -6,10 +6,10 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Role extends BaseEntity {
+export class Faculty extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  role_id: string;
+  faculty_id: string;
 
   @Column()
-  role_name: string;
+  faculty_name: string;
 }

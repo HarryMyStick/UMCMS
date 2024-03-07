@@ -26,7 +26,7 @@ export class Profile extends BaseEntity {
   phone_number: string;
 
   @OneToOne(() => User, { cascade: true, onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' } ) 
+  @JoinColumn({ name: 'user_id' }) 
   user_id: User;
 
   toJSON() {
