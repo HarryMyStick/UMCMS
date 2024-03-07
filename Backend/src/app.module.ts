@@ -6,6 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { RoleModule } from './role/role.module';
 import { ProfileModule } from './profile/profile.module';
 import { FacultyModule } from './faculty/faculty.module';
+import { ContributionModule } from './contribution/contribution.module';
+import { FileModule } from './files_upload/file.module';
+import { CommentModule } from './comment/comment.module';
+import { AcademicYearModule } from './academic_year/academic-year.module';
 
 @Module({
   imports: [
@@ -26,6 +30,10 @@ import { FacultyModule } from './faculty/faculty.module';
     RoleModule,
     ProfileModule,
     FacultyModule,
+    ContributionModule,
+    FileModule,
+    CommentModule,
+    AcademicYearModule,
   ],
   controllers: [],
   providers: [],
