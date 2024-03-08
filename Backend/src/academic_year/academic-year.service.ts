@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AcademicYear } from './models/entities/academic-year.entity';
 import { Repository } from 'typeorm';
@@ -23,6 +23,16 @@ export class AcademicYearService {
 
     const academicYear = this.academicYearRepository.create(createAcademicYearDto);
     await academicYear.save();
+    return academicYear;
+  }
+
+  async getAcademicYearByYear(year: string): Promise<AcademicYear> {
+    const academicYear = await this.academicYearRepository.findOne({
+      where: { academic_year: year },
+    });
+    if (!academicYear) {
+      throw new NotFoundException('Role not found');
+    }
     return academicYear;
   }
 }

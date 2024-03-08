@@ -6,6 +6,7 @@ import { CreateUserDto } from './models/dto/create-user.dto';
 import { Role } from 'src/role/models/entities/role.entity';
 import { ProfileService } from 'src/profile/profile.service';
 import { FacultyService } from 'src/faculty/faculty.service';
+import { RoleService } from 'src/role/role.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
     @InjectRepository(Role) private roleRepository: Repository<Role>,
     private readonly profileService: ProfileService,
     private readonly facultyService: FacultyService,
+    private readonly roleService: RoleService,
   ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -32,8 +34,8 @@ export class UsersService {
     if (!faculty) {
       throw new NotFoundException('Faculty not found');
     }
-
-    const roleId: string = '8195c61a-aa59-421f-bcda-d832243efe86';
+    const roleObj = await this.roleService.getRoleByName("Student");
+    const roleId = roleObj.role_id;
     const role = await this.roleRepository.findOne({
       where: { role_id: roleId },
     });

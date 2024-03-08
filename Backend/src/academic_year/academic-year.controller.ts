@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { AcademicYearService } from './academic-year.service';
 import { CreateAcademicYearDto } from './models/dto/create-academic-year.dto';
 import { AcademicYear } from './models/entities/academic-year.entity';
@@ -12,5 +12,10 @@ export class AcademicYearController {
   @Post('createAcedemicYear') 
   createAcademicYear(@Body() createAcademicYearDto: CreateAcademicYearDto): Promise<AcademicYear> {
     return this.academicYearService.createAcademicYear(createAcademicYearDto);
+  }
+
+  @Get('getAcademicYearByYear/:year')
+  async getAcademicYearByYear(@Param('year') year: string): Promise<AcademicYear> {
+    return this.academicYearService.getAcademicYearByYear(year);
   }
 }
