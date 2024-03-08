@@ -24,7 +24,10 @@ export class Contribution extends BaseEntity {
   article_title: string;
 
   @Column()
-  article_content: string;
+  article_description: string;
+
+  @Column()
+  article_content_url: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   submission_date: Date;
@@ -35,10 +38,10 @@ export class Contribution extends BaseEntity {
   @Column({ default: true })
   isEnable: boolean;
 
-  @Column({ default: false })
-  isSelected: boolean;
+  @Column({ default: 'Pending' })
+  status: string;
 
   @ManyToOne(() => AcademicYear)
   @JoinColumn({ name: 'academic_year_id' }) 
-  academic_year: AcademicYear;
+  academic_year_id: AcademicYear;
 }
