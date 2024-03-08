@@ -39,7 +39,12 @@ export const Login: NextPage = () => {
       });
 
       if (response.ok) {
-        await router.push("/dashboard");
+        const data = await response.json();
+        const userId = data.user_id; 
+        await router.push({
+            pathname: "/dashboard",
+            query: { user_id: userId },
+        });
       } else {
         setErrorMessage("Invalid username or password.");
       }
@@ -69,10 +74,7 @@ export const Login: NextPage = () => {
               UMCMS<span className="font-mono">™</span>
             </h1>
           </div>
-          <form
-            id="login_form"
-            action="api_login"
-            method="POST"
+          < div 
             className="flex flex-col justify-center"
           >
             <label className="text-sm font-medium">Username</label>
@@ -82,6 +84,7 @@ export const Login: NextPage = () => {
               name="username"
               placeholder="wahyusa"
               required
+              ref={username}
             />
             <label className="text-sm font-medium">Password</label>
             <input
@@ -90,10 +93,13 @@ export const Login: NextPage = () => {
               name="password"
               placeholder="********"
               required
+              ref={password}
             />
             <button
               className="mt-3 block rounded-md bg-sky-600 px-4 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700"
-              type="submit"
+              onClick={() => {
+                void logIn();
+              }}
             >
               <span id="login_default_state">Sign in</span>
             </button>
@@ -102,7 +108,7 @@ export const Login: NextPage = () => {
                 <span id="login_default_state">Create new account</span>
               </div>
             </a>
-          </form>
+            </div>
         </div>
       </section>
     </div>
