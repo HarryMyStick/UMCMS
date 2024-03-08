@@ -29,6 +29,9 @@ export class Contribution extends BaseEntity {
   @Column()
   article_content_url: string;
 
+  @Column({ default: "default" })
+  image_url: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   submission_date: Date;
 

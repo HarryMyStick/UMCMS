@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { User } from 'src/users/models/entities/user.entity';
 import { AcademicYear } from 'src/academic_year/models/entities/academic-year.entity';
+import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
 
 @Injectable()
 export class ContributionService {
@@ -40,4 +41,23 @@ export class ContributionService {
     await contribution.save();
     return contribution;
   }
+
+  async updateContribution(updateContributionUrlDto: UpdateContributionUrlDto): Promise<Contribution> {
+    const cont = await this.contributionRepository.findOne({
+      where: [{ contribution_id: updateContributionUrlDto.contribution_id }],
+    });
+    if (!cont) {
+      throw new Error(`Contribution with id ${updateContributionUrlDto.contribution_id} not found`);
+    }
+    
+    // Update the image_url field of the contribution entity
+    cont.image_url = updateContributionUrlDto.image_url;
+  
+    // Save the updated contribution entity
+    await this.contributionRepository.save(cont);
+  
+    return cont;
+  }
+  
+
 }

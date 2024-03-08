@@ -1,4 +1,4 @@
-import { IsNotEmpty, isNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional, isNotEmpty } from 'class-validator';
 
 export class CreateContributionDto {
   @IsNotEmpty()
@@ -15,6 +15,9 @@ export class CreateContributionDto {
 
   @IsNotEmpty()
   article_content_url: string;
+
+  @IsOptional()
+  image_url: string = 'default_image_url';
 
   @IsNotEmpty()
   submission_date: Date;

@@ -1,4 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import { MulterModule } from '@nestjs/platform-express';
+import * as bodyParser from 'body-parser';
 
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,7 +9,6 @@ import { RoleModule } from './role/role.module';
 import { ProfileModule } from './profile/profile.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { ContributionModule } from './contribution/contribution.module';
-import { FileModule } from './files_upload/file.module';
 import { CommentModule } from './comment/comment.module';
 import { AcademicYearModule } from './academic_year/academic-year.module';
 
@@ -31,11 +32,20 @@ import { AcademicYearModule } from './academic_year/academic-year.module';
     ProfileModule,
     FacultyModule,
     ContributionModule,
-    FileModule,
     CommentModule,
     AcademicYearModule,
+    MulterModule.register({
+      // Adjust these options as per your requirement
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10 MB limit
+      },
+    }),
   ],
-  controllers: [],
-  providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(bodyParser.json({ limit: '10mb' })) // Adjust limit as per your requirement
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}
