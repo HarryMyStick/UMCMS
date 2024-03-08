@@ -8,7 +8,6 @@ import Header from "./header";
 
 
 
-
 interface Profile {
   profile_id: string;
   first_name: string;
@@ -19,6 +18,9 @@ interface Profile {
 }
 const Nav: React.FC = () => {
   const router = useRouter();
+  const handleClick = (index: number) => {
+    setActiveTab(index);
+  };
   const handleLogout = () => {
     // Implement your logout functionality here
     // For example, clearing local storage or session
@@ -26,9 +28,53 @@ const Nav: React.FC = () => {
   };
   const tabs = ["Home", "Magazin", "Submit Contribution", "Profile"];
   const [activeTab, setActiveTab] = useState(0);
-
+// Start Upload
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [wordFile, setWordFile] = useState<File | null | undefined>(null);
 
+  const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const filesArray = Array.from(event.target.files);
+      setImageFiles(filesArray);
+    }
+  };
+
+  const handleWordFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setWordFile(event.target.files[0]);
+    }
+  };
+
+  const fetchUploadData = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("user_id", "2d100507-8be5-4ee9-9f13-e74a795eb97e");
+      formData.append("article_title", "Sample Article Title");
+      formData.append("article_description", "Sample article description goes here.");
+      formData.append("submission_date", "2024-03-09T12:00:00Z");
+      formData.append("edit_date", "2024-03-09T12:00:00Z");
+      formData.append("status", "Published");
+      formData.append("academic_year_id", "2891d2f3-8862-4b6a-8e0c-ee3ab56a1514");
+      formData.append("articleFile", wordFile as Blob);
+  
+      const response = await fetch(`${urlBackend}/contribution/createContribution/`, {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (response.ok) {
+        // Handle success
+      } else {
+        // Handle error
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+  //End Upload
+
+  //Start view profile
   useEffect(() => {
     fetchProfileData();
   }, []);
@@ -64,10 +110,30 @@ const Nav: React.FC = () => {
   if (!profile) {
     return <div>Loading...</div>;
   }
+   //End view profile
 
-  const handleClick = (index: number) => {
-    setActiveTab(index);
-  };
+
+
+
+
+
+
+  // async function uploadFile(contributionId, file) {
+  //   const formData = new FormData();
+  //   formData.append('contribution_id', contributionId);
+  //   formData.append('file', file);
+
+  //   try {
+  //     const response = await axios.post('http://your-api-url/filesupload/uploadFile', formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data',
+  //       },
+  //     });
+  //     console.log('File uploaded successfully:', response.data);
+  //   } catch (error) {
+  //     console.error('Error uploading file:', error);
+  //   }
+  // }
 
   return (
     <div className="flex flex-col bg_white">
@@ -94,11 +160,10 @@ const Nav: React.FC = () => {
                 <li key={index} className="me-2" role="presentation">
                   <button
                     onClick={() => handleClick(index)}
-                    className={`inline-block rounded-t-lg border-b-2 border-transparent p-4 hover:border-red-400 hover:text-gray-600 dark:hover:text-gray-300 ${
-                      index === activeTab
-                        ? "text-gray-600 dark:text-gray-900"
-                        : ""
-                    }`}
+                    className={`inline-block rounded-t-lg border-b-2 border-transparent p-4 hover:border-red-400 hover:text-gray-600 dark:hover:text-gray-300 ${index === activeTab
+                      ? "text-gray-600 dark:text-gray-900"
+                      : ""
+                      }`}
                     id="profile-tab-example"
                     type="button"
                     role="tab"
@@ -110,13 +175,13 @@ const Nav: React.FC = () => {
                 </li>
               ))}
             </ul>
-            
+
           </div>
           <button
-              className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
-              onClick={handleLogout}
-            >Logout
-            </button>
+            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            onClick={handleLogout}
+          >Logout
+          </button>
         </nav>
       </div>
 
@@ -132,7 +197,83 @@ const Nav: React.FC = () => {
               </div>
             )}
             {index === 1 && <div>Content of 1 tab</div>}
-            {index === 2 && <div>Content of 2 tab</div>}
+            {index === 2 && <div>
+              {/* <div>
+                <div>
+                  <input type="file" multiple  />
+                  <input type="file"  />
+                </div>
+                <button>Submit</button>
+              </div></div> */}
+
+              <div className="flex items-center justify-center p-12">
+                <div className="mx-auto w-full max-w-[550px] bg-white">
+                  <form className="py-6 px-9" action="https://formbold.com/s/FORM_ID" method="POST">
+                    <div className="mb-6 pt-4">
+                      <label className="mb-5 block text-xl font-semibold text-[#07074D]">
+                        Upload Image
+                      </label>
+                      <div className="mb-8">
+                        <input type="file" multiple name="imageFiles" id="imageFiles" className="sr-only" onChange={handleImageFileChange} />
+                        <label htmlFor="imageFiles" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                          <div>
+                            <span className="mb-2 block text-xl font-semibold text-[#07074D]">
+                              Drop image files here
+                            </span>
+                            <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                              Or
+                            </span>
+                            <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                              Browse
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                      
+                    <div className="mb-6">
+                      <h2 className="mb-2 block text-xl font-semibold text-[#07074D]">Selected Image Files:</h2>
+                      {imageFiles.map((file, index) => (
+                        <p key={index}>{file.name}</p>
+                      ))}
+                    </div>
+
+                      <label className="mb-5 block text-xl font-semibold text-[#07074D]">
+                        Upload Word File
+                      </label>
+                      <div className="mb-8">
+                        <input type="file" name="wordFile" id="wordFile" className="sr-only" onChange={handleWordFileChange} />
+                        <label htmlFor="wordFile" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                          <div>
+                            <span className="mb-2 block text-xl font-semibold text-[#07074D]">
+                              Drop Word file here
+                            </span>
+                            <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                              Or
+                            </span>
+                            <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                              Browse
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h2 className="mb-2 block text-xl font-semibold text-[#07074D]">Selected Word File:</h2>
+                      {wordFile && <p>{wordFile.name}</p>}
+                    </div>
+
+                    <div>
+                      <button onClick={fetchUploadData} className="hover:shadow-form w-full rounded-md bg-[#6A64F1] py-3 px-8 text-center text-base font-semibold text-white outline-none">
+                        Send Files
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            }
+
             {/* Start View Profile */}
             {index === 3 && (
               <div>
@@ -143,7 +284,7 @@ const Nav: React.FC = () => {
                         <div className="flex justify-between text-center ">
                           <button className="ml-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 inline-flex items-center justify-center w-10 h-10">
                             <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 17 14">
+                              viewBox="0 0 17 14">
                               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"></path>
                             </svg>
                           </button>
@@ -151,7 +292,7 @@ const Nav: React.FC = () => {
                             My Account
                           </h6>
                           <Link
-                            href={`/edit-profile/2d100507-8be5-4ee9-9f13-e74a795eb97e`}
+                             href={`/edit-profile/${profile?.user_id}`}
                           >
                             <button
                               className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
