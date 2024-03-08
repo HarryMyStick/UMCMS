@@ -1,14 +1,20 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, isNotEmpty } from 'class-validator';
 
 export class CreateContributionDto {
   @IsNotEmpty()
   contribution_id: string;
 
   @IsNotEmpty()
+  user_id: string;
+
+  @IsNotEmpty()
   article_title: string;
 
   @IsNotEmpty()
-  article_content: string;
+  article_description: string;
+
+  @IsNotEmpty()
+  article_content_url: string;
 
   @IsNotEmpty()
   submission_date: Date;
@@ -20,5 +26,8 @@ export class CreateContributionDto {
   isEnable: boolean;
 
   @IsNotEmpty()
-  isSelected: boolean;
+  status: string;
+
+  @IsNotEmpty()
+  academic_year_id: string;
 }

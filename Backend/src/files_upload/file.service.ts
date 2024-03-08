@@ -13,17 +13,18 @@ export class FileService {
   ) { }
 
   async uploadFile(uploadFileDto: UploadFileDto): Promise<File> {
-    const { image_url } = uploadFileDto;
+    const { contribution_id, image_url } = uploadFileDto;
 
-    const existingPicture = await this.fileRepository.findOne({
-      where: [{ image_url }],
+    const existingFile = await this.fileRepository.findOne({
+      where: { image_url },
     });
 
-    if (existingPicture) {
-      return existingPicture;
+    if (existingFile) {
+      return existingFile;
     }
+
     const contribution = await this.contributionRepository.findOne({
-      where: { contribution_id: uploadFileDto.contribution_id },
+      where: { contribution_id: contribution_id },
     });
     if (!contribution) {
       throw new NotFoundException('Contribution not found');
