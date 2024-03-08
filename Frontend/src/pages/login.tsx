@@ -12,7 +12,7 @@ export const Login: NextPage = () => {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setErrorMessage("");
+      setErrorMessage('');
     }, 3000);
     return () => clearTimeout(timeout);
   }, [errorMessage]);
@@ -20,7 +20,7 @@ export const Login: NextPage = () => {
   const logIn = async () => {
     const fieldUsername = username.current?.value.trim();
     const fieldPassword = password.current?.value.trim();
-
+    
     if (!fieldUsername || !fieldPassword) {
       setErrorMessage("Please enter username and password.");
       return;
@@ -28,18 +28,18 @@ export const Login: NextPage = () => {
 
     try {
       const response = await fetch(`${urlBackend}/users/login`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           username: fieldUsername,
-          password: fieldPassword,
-        }),
+          password: fieldPassword
+        })
       });
 
       if (response.ok) {
-        await router.push("/dashboard");
+        await router.push('/dashboard');
       } else {
         setErrorMessage("Invalid username or password.");
       }
@@ -47,65 +47,44 @@ export const Login: NextPage = () => {
       console.error("Error logging in:", error);
       setErrorMessage("An error occurred while logging in.");
     }
-  };
+  }
 
   return (
-    <div className="bg-gradient-to-tr from-sky-200 to-sky-500">
-      <section
-        id="login"
-        className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-4"
-      >
-        <div className="rounded bg-sky-100 p-6">
-          <div className="m-3 flex items-center justify-center text-4xl font-black text-sky-900">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="mr-3 h-10 w-10"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" />
-            </svg>
-            <h1 className="tracking-wide">
-              UMCMS<span className="font-mono">™</span>
-            </h1>
+    <article className="fixed inset-0 z-30 flex flex-col bg-ln-custom p-7 transition duration-300">
+      <div className="flex-grow flex items-center justify-center relative z-10">
+        <div className="w-full sm:w-96 xl:mt[150px] lg:mt-[150px] flex flex-col gap-5 bg-white rounded-2xl p-5 pt-2 pb-3">
+          <div className="flex justify-center">
+            <h2 className="font-bold text-3xl">Login</h2>
           </div>
-          <form
-            id="login_form"
-            action="api_login"
-            method="POST"
-            className="flex flex-col justify-center"
-          >
-            <label className="text-sm font-medium">Username</label>
+          <div className="flex flex-col gap-2 text-black">
             <input
-              className="mb-3 mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 px-2 py-1.5 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-              type="text"
-              name="username"
-              placeholder="wahyusa"
-              required
+              className="common-input grow rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3"
+              placeholder="Enter your username"
+              ref={username}
             />
-            <label className="text-sm font-medium">Password</label>
             <input
-              className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
               type="password"
-              name="password"
-              placeholder="********"
-              required
+              className="common-input grow rounded-2xl border border-gray-300 bg-gray-50 px-4 py-3"
+              placeholder="Enter your password"
+              ref={password}
             />
-            <button
-              className="mt-3 block rounded-md bg-sky-600 px-4 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700"
-              type="submit"
-            >
-              <span id="login_default_state">Sign in</span>
-            </button>
-            <a href="/register" className="block w-full">
-              <div className="mb-3 mt-2 flex items-center justify-center rounded-md bg-sky-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700">
-                <span id="login_default_state">Create new account</span>
+            {errorMessage && (
+              <div className="bg-yellow-100 border border-yellow-300 rounded-md p-3 text-yellow-900 text-sm">
+                {errorMessage}
               </div>
-            </a>
-          </form>
+            )}
+          </div>
+          <button
+            className="rounded-2xl border-b-4 border-blue-500 bg-blue-950 py-4 my-2 font-bold uppercase text-white transition hover:brightness-110"
+            onClick={() => {
+              void logIn();
+            }}
+          >
+            {'LogIn'}
+          </button>
         </div>
-      </section>
-    </div>
+      </div>
+    </article>
   );
 };
 
