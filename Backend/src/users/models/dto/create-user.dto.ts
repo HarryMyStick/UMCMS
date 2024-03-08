@@ -1,6 +1,10 @@
 import { IsNotEmpty } from 'class-validator';
 
 export class CreateUserDto {
+
+  @IsNotEmpty()
+  user_id: string;
+
   @IsNotEmpty()
   username: string;
 
@@ -8,5 +12,5 @@ export class CreateUserDto {
   password: string;
 
   @IsNotEmpty()
-  role: string;
+  faculty_name: string;
 }
