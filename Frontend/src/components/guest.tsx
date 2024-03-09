@@ -7,11 +7,10 @@ import Header from "./header";
 interface NavProps {
   userId: string;
 }
-const Administrator: React.FC <NavProps> = ({ userId }) => {
-
+const Guest: React.FC <NavProps> = ({ userId }) => {
     return (
         <h1></h1>
     );
 };
 
-export default Administrator;
+export default Guest;

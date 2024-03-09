@@ -43,7 +43,7 @@ export const Login: NextPage = () => {
         const userId = data.user_id; 
         await router.push({
             pathname: "/dashboard",
-            query: { user_id: userId },
+            query: { user_id: userId, role_name: data.role.role_name},
         });
       } else {
         setErrorMessage("Invalid username or password.");
