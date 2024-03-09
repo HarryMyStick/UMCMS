@@ -42,23 +42,23 @@ export class ContributionService {
     return contribution;
   }
 
-  async updateContribution(updateContributionUrlDto: UpdateContributionUrlDto): Promise<Contribution> {
+  async updateImageContribution(updateContributionUrlDto: UpdateContributionUrlDto): Promise<Contribution> {
     const cont = await this.contributionRepository.findOne({
       where: [{ contribution_id: updateContributionUrlDto.contribution_id }],
     });
     if (!cont) {
       throw new Error(`Contribution with id ${updateContributionUrlDto.contribution_id} not found`);
     }
-    
+
     // Update the image_url field of the contribution entity
     cont.image_url = updateContributionUrlDto.image_url;
-  
+
     // Save the updated contribution entity
     await this.contributionRepository.save(cont);
-  
+
     return cont;
   }
-  
+
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
@@ -68,5 +68,45 @@ export class ContributionService {
       .andWhere('sc.status = :status', { status: 'Published' })
       .getMany();
   }
+
+  async getContributionViaUserId(userId: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('contribution')
+      .leftJoinAndSelect('contribution.user_id', 'user')
+      .where('user.user_id = :userId', { userId })
+      .getMany();
+  }
+
+  async updateContribution(createContributionDto: CreateContributionDto): Promise<Contribution> {
+    const { contribution_id, user_id, academic_year_id, ...contributionData } = createContributionDto;
+    const contribution = await this.contributionRepository.findOne({
+      where: [{ contribution_id: contribution_id }],
+    });
+    if (!contribution) {
+      throw new Error(`Contribution with ID ${contribution_id} not found`);
+    }
+    if (user_id) {
+      const user = await this.userRepository.findOne({
+        where: [{ user_id: user_id }],
+      });
+      if (!user) {
+        throw new Error(`User with ID ${user_id} not found`);
+      }
+      contribution.user_id = user;
+    }
+    if (academic_year_id) {
+      const academicYear = await this.academicYearRepository.findOne({
+        where: [{ academic_year_id: academic_year_id }],
+      });
+      if (!academicYear) {
+        throw new Error(`Academic year with ID ${academic_year_id} not found`);
+      }
+      contribution.academic_year_id = academicYear;
+    }
+    Object.assign(contribution, contributionData);
+    await this.contributionRepository.save(contribution);
+
+    return contribution;
+}
 
 }
