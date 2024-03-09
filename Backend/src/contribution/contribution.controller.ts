@@ -73,5 +73,12 @@ export class ContributionController {
 
     return this.contributionService.updateContribution(createContributionDto);
   }
+
+  @Delete('deleteContribution/:contributionId')
+  async deleteContribution(
+    @Param('contributionId') contributionId: string
+  ): Promise<void> {
+    return this.contributionService.deleteContribution(contributionId);
+  }
   
 }
