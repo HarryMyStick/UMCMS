@@ -18,7 +18,7 @@ interface Profile {
   phone_number: string;
   user_id: string;
 }
-const Nav: React.FC<NavProps> = ({ userId }) => {
+const Student: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
   const firstName = useRef<HTMLInputElement>(null);
   const lastName = useRef<HTMLInputElement>(null);
@@ -36,8 +36,13 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = () => {
     setIsEditing(true);
   };
-
-
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setErrorMessage('');
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [errorMessage]);
+  
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
@@ -69,7 +74,7 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
     // For example, clearing local storage or session
     router.push("/login"); // Redirect to login page after logout
   };
-  const tabs = ["Home", "Magazin", "Submit Contribution", "Profile"];
+  const tabs = ["Home", "Magazine", "Submit Contribution", "Profile"];
   const [activeTab, setActiveTab] = useState(0);
 
   //Start view profile
@@ -172,6 +177,9 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
     try {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
+      if(fieldTitle === "" || fieldDescription ===""){
+        setErrorMessage("Please enter full information.");
+      }
       const formData = new FormData();
       formData.append("user_id", userId);
       formData.append("article_title", fieldTitle);
@@ -203,8 +211,8 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
         if (uploadImageResponse.ok) {
           // Image upload successful
         } else {
-            setErrorMessage("Please enter full information.");
-            return;
+          setErrorMessage("Please enter full information.");
+          return;
         }
       } else {
         // Handle error
@@ -299,6 +307,11 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
                     </div>
                     <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                       <form>
+                        {errorMessage && (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-md p-3 text-yellow-900 text-sm">
+                            {errorMessage}
+                          </div>
+                        )}
                         <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
@@ -445,7 +458,7 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
                                 <label
                                   className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
                                   htmlFor="first_name"
-                                > 
+                                >
                                   First Name
                                 </label>
                                 <input
@@ -533,4 +546,4 @@ const Nav: React.FC<NavProps> = ({ userId }) => {
   );
 };
 
-export default Nav;
+export default Student;

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
-import Nav from "../components/nav";
+import Student from "../components/student";
 import Administrator from "~/components/administrator";
 import Mkcoordinator from "~/components/mkCoordinator";
 
@@ -35,7 +35,7 @@ export const Dashboard: NextPage = () => {
   let dashboardContent;
   switch (roleName) {
     case "Student":
-      dashboardContent = <Nav userId={userId} />;
+      dashboardContent = <Student userId={userId} />;
       break;
     case "MarketingCoordinator":
       dashboardContent = <Mkcoordinator userId={userId} />;
