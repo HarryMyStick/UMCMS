@@ -59,5 +59,14 @@ export class ContributionService {
     return cont;
   }
   
+  async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status = :status', { status: 'Published' })
+      .getMany();
+  }
 
 }

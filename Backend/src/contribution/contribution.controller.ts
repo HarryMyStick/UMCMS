@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param } from '@nestjs/common';
 import { ContributionService } from './contribution.service';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { Contribution } from './models/entities/contribution.entity';
@@ -45,5 +45,10 @@ export class ContributionController {
     updateContributionUrlDto.image_url = filePath;
   
     return this.contributionService.updateContribution(updateContributionUrlDto);
+  }
+
+  @Get('getContributionViaFacultyName/:facultyName')
+  async getContributionViaFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
+    return this.contributionService.getContributionsByFacultyName(facultyName);
   }
 }

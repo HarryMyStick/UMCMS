@@ -7,12 +7,14 @@ import { Role } from 'src/role/models/entities/role.entity';
 import { ProfileService } from 'src/profile/profile.service';
 import { FacultyService } from 'src/faculty/faculty.service';
 import { RoleService } from 'src/role/role.service';
+import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private usersRepository: Repository<User>,
     @InjectRepository(Role) private roleRepository: Repository<Role>,
+    @InjectRepository(Faculty) private facultyRepository: Repository<Faculty>,
     private readonly profileService: ProfileService,
     private readonly facultyService: FacultyService,
     private readonly roleService: RoleService,
@@ -49,7 +51,7 @@ export class UsersService {
       role: role,
       faculty_id: faculty,
     });
-    
+
     await this.profileService.createProfile(user);
 
     await user.save();
@@ -66,5 +68,22 @@ export class UsersService {
     });
 
     return existingUser;
+  }
+
+  async getFacultyByUserId(userId: string): Promise<Faculty> {
+    const user = await this.usersRepository.findOne({
+       where: { user_id: userId }, 
+       relations: ['faculty_id']
+      });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const faculty = user.faculty_id
+    if (!faculty) {
+      throw new NotFoundException('Faculty not found');
+    }
+    return faculty;
   }
 }
