@@ -5,10 +5,12 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import Nav from "../components/nav";
 import Administrator from "~/components/administrator";
+import Mkcoordinator from "~/components/mkCoordinator";
 
 export const Dashboard: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [userId, setUserId] = useState("");
+  const [roleName, setUserRole] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -19,25 +21,47 @@ export const Dashboard: NextPage = () => {
   }, [errorMessage]);
 
   useEffect(() => {
-    // Retrieve the user_id from the query parameters
-    const { user_id } = router.query;
+    const { user_id, role_name } = router.query;
 
-    // Check if user_id is defined before updating the state
     if (typeof user_id === 'string') {
-      // Update the state with the user_id
       setUserId(user_id);
     }
-  }, [router.query]);
+
+    if (typeof role_name === 'string') {
+      setUserRole(role_name);
+    }
+  }, [router.query.user_id, router.query.role_name]);
+
+  let dashboardContent;
+  switch (roleName) {
+    case "Student":
+      dashboardContent = <Nav userId={userId} />;
+      break;
+    case "MarketingCoordinator":
+      dashboardContent = <Mkcoordinator userId={userId} />;
+      break;
+    case "Admin":
+      dashboardContent = <Administrator userId={userId} />;
+      break;
+      case "MarketingManager":
+      dashboardContent = <Administrator userId={userId} />;
+      break;
+      case "Guest":
+      dashboardContent = <Administrator userId={userId} />;
+      break;
+    default:
+      dashboardContent = null;
+  }
 
   return (
     <div>
-      <Nav />
-      <Administrator />
+      {dashboardContent}
       {/* Your dashboard content */}
       <div className="flex-grow flex items-center justify-center relative z-10">
         <div className="w-full sm:w-96 xl:mt[150px] lg:mt-[150px] flex flex-col gap-5 bg-white rounded-2xl p-5 pt-2 pb-3">
           <div className="flex justify-between items-center">
-          <h1>User ID: {userId}</h1>
+            <h1>User ID: {userId}</h1>
+            <h2>Role Name: {roleName}</h2>
           </div>
           {/* Dashboard content goes here */}
         </div>
