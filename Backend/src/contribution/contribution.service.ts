@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Contribution } from './models/entities/contribution.entity';
 import { Repository } from 'typeorm';
@@ -107,6 +107,16 @@ export class ContributionService {
     await this.contributionRepository.save(contribution);
 
     return contribution;
-}
+  }
+
+  async deleteContribution(contributionId: string): Promise<void> {
+    const contribution = await this.contributionRepository.findOne({
+      where: [{ contribution_id: contributionId }],
+    });
+    if (!contribution) {
+      throw new NotFoundException('Contribution not found');
+    }
+    await this.contributionRepository.remove(contribution);
+  }
 
 }
