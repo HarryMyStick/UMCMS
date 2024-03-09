@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete } from '@nestjs/common';
 import { ContributionService } from './contribution.service';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { Contribution } from './models/entities/contribution.entity';
@@ -44,11 +44,34 @@ export class ContributionController {
   
     updateContributionUrlDto.image_url = filePath;
   
-    return this.contributionService.updateContribution(updateContributionUrlDto);
+    return this.contributionService.updateImageContribution(updateContributionUrlDto);
   }
 
   @Get('getContributionViaFacultyName/:facultyName')
   async getContributionViaFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
     return this.contributionService.getContributionsByFacultyName(facultyName);
   }
+
+  @Get('getContributionViaUserId/:user_id')
+  async getContributionViaUserId(@Param('user_id') user_id: string): Promise<Contribution[]> {
+    return this.contributionService.getContributionViaUserId(user_id);
+  }
+
+  @Patch('updateContribution')
+  @UseInterceptors(FileInterceptor('articleFile')) 
+  async updateContribution(
+    @Body() createContributionDto: CreateContributionDto,
+    @UploadedFile() file: Express.Multer.File 
+  ): Promise<Contribution> {
+    const uploadFolder = 'src/contribution/uploads';
+    const filename = `${Date.now()}-${file.originalname}`;
+    const filePath = path.join(uploadFolder, filename);
+
+    fs.writeFileSync(filePath, file.buffer);
+
+    createContributionDto.article_content_url = filePath;
+
+    return this.contributionService.updateContribution(createContributionDto);
+  }
+  
 }
