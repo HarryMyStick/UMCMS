@@ -59,5 +59,16 @@ export class ContributionService {
     return cont;
   }
   
+  async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
+    const contributions = await this.contributionRepository
+      .createQueryBuilder('contribution')
+      .innerJoin('contribution.user_id', 'user')
+      .innerJoin('user.faculty_id', 'faculty')
+      .where('faculty.faculty_name = :facultyName', { facultyName })
+      .andWhere('contribution.status = :status', { status: 'Publish' })
+      .getMany();
+
+    return contributions;
+  }
 
 }
