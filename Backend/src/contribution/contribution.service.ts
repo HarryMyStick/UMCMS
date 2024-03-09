@@ -60,15 +60,13 @@ export class ContributionService {
   }
   
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
-    const contributions = await this.contributionRepository
-      .createQueryBuilder('contribution')
-      .innerJoin('contribution.user_id', 'user')
-      .innerJoin('user.faculty_id', 'faculty')
-      .where('faculty.faculty_name = :facultyName', { facultyName })
-      .andWhere('contribution.status = :status', { status: 'Publish' })
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status = :status', { status: 'Published' })
       .getMany();
-
-    return contributions;
   }
 
 }
