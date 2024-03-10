@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import Student from "../components/student";
 import Administrator from "~/components/administrator";
-import Mkcoordinator from "~/components/mkCoordinator";
+import Mkcoordinator from "~/components/mkcoordinator";
 
 export const Dashboard: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
