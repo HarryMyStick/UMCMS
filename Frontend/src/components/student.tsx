@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
 import Header from "./header";
+import StudentContribution from "./studentcontribution";
+
 
 interface NavProps {
   userId: string;
@@ -18,6 +20,8 @@ interface Profile {
   phone_number: string;
   user_id: string;
 }
+
+
 const Student: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
   const firstName = useRef<HTMLInputElement>(null);
@@ -32,6 +36,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [descriptionValue, setDescriptionValue] = useState<string>('');
 
   const [isEditing, setIsEditing] = useState(false);
+  
+
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -42,7 +48,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }, 3000);
     return () => clearTimeout(timeout);
   }, [errorMessage]);
-  
+
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
@@ -74,7 +80,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     // For example, clearing local storage or session
     router.push("/login"); // Redirect to login page after logout
   };
-  const tabs = ["Home", "Magazine", "Submit Contribution", "Profile"];
+  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
   const [activeTab, setActiveTab] = useState(0);
 
   //Start view profile
@@ -177,7 +183,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     try {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
-      if(fieldTitle === "" || fieldDescription ===""){
+      if (fieldTitle === "" || fieldDescription === "") {
         setErrorMessage("Please enter full information.");
       }
       const formData = new FormData();
@@ -222,8 +228,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   };
   //End Upload
-
-
 
   return (
     <div className="flex flex-col bg_white">
@@ -283,12 +287,39 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           >
             {index === 0 && (
               <div>
-                <Header />
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Home
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Magazine <span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <StudentContribution userId={userId} />
               </div>
             )}
-            {index === 1 && <div>Content of 1 tab</div>}
-            {index === 2 &&
+            {index === 1 &&
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Contribute article
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Contribute your article magazine<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                   <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
                     <div className="mb-0 rounded-t bg_nude px-6 py-6">
@@ -417,9 +448,41 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             }
+            {index === 2 &&
+              <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Manage contributions
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Manage my contributions <span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
             {/* Start View Profile */}
             {index === 3 && (
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Profile information
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Your profile information<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                     <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
@@ -450,7 +513,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                       <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                         <form>
                           <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
-                            Profile Information
+                            Manage Profile
                           </h6>
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
