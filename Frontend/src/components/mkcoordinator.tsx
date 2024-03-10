@@ -7,10 +7,10 @@ import Header from "./header";
 interface NavProps {
   userId: string;
 }
-const Mkcoordinator: React.FC <NavProps> = ({ userId }) => {
+const MarketingCoordinator: React.FC <NavProps> = ({ userId }) => {
     return (
         <h1></h1>
     );
 };
 
-export default Mkcoordinator;
+export default MarketingCoordinator;
