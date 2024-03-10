@@ -5,9 +5,6 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import Student from "../components/student";
 import Administrator from "~/components/administrator";
-
-import Guest from "~/components/guest";
-import MarketingManager from "~/components/mkmanager";
 import Mkcoordinator from "~/components/mkcoordinator";
 
 export const Dashboard: NextPage = () => {
@@ -40,17 +37,17 @@ export const Dashboard: NextPage = () => {
     case "Student":
       dashboardContent = <Student userId={userId} />;
       break;
-    case "MarketingCoordinator":
+    case "Marketing Coordinator":
       dashboardContent = <Mkcoordinator userId={userId} />;
       break;
     case "Admin":
       dashboardContent = <Administrator userId={userId} />;
       break;
-      case "MarketingManager":
-      dashboardContent = <MarketingManager userId={userId} />;
+      case "Marketing Manager":
+      dashboardContent = <Administrator userId={userId} />;
       break;
       case "Guest":
-      dashboardContent = <Guest userId={userId} />;
+      dashboardContent = <Administrator userId={userId} />;
       break;
     default:
       dashboardContent = null;
