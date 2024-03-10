@@ -27,10 +27,10 @@ export class Profile extends BaseEntity {
 
   @OneToOne(() => User, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' }) 
-  user_id: User;
+  user: User;
 
   toJSON() {
-    const { user_id, ...rest } = this;
+    const { user, ...rest } = this;
     return rest;
   }
 

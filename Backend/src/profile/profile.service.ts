@@ -14,7 +14,7 @@ export class ProfileService {
 
   async createProfile(user: User): Promise<Profile> {
     const profile = new Profile();
-    profile.user_id = user;
+    profile.user = user;
     await profile.save();
     return profile;
 }
@@ -42,7 +42,7 @@ export class ProfileService {
 
   async getProfileByUserId(userId: string): Promise<Profile> {
     const profile = await this.profileRepository.findOne({
-      where: { user_id: Equal(userId) },
+      where: { user: Equal(userId) },
     });
 
     if (!profile) {

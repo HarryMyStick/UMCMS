@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete, Res } from '@nestjs/common';
 import { ContributionService } from './contribution.service';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { Contribution } from './models/entities/contribution.entity';
@@ -6,7 +6,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import * as fs from 'fs';
+import { UpdateStatusDto } from './models/dto/update_status.dto';
 import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
+import { Response } from 'express';
 
 @ApiTags('Contribution')
 @Controller('contribution')
@@ -25,7 +27,7 @@ export class ContributionController {
 
     fs.writeFileSync(filePath, file.buffer);
 
-    createContributionDto.article_content_url = filePath;
+    createContributionDto.article_content_url = filename;
 
     return this.contributionService.createContribution(createContributionDto);
   }
@@ -42,13 +44,18 @@ export class ContributionController {
   
     fs.writeFileSync(filePath, file.buffer);
   
-    updateContributionUrlDto.image_url = filePath;
+    updateContributionUrlDto.image_url = filename;
   
     return this.contributionService.updateImageContribution(updateContributionUrlDto);
   }
 
-  @Get('getContributionViaFacultyName/:facultyName')
-  async getContributionViaFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
+  @Get('getPublishContributionsByFacultyName/:facultyName')
+  async getPublishContributionsByFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
+    return this.contributionService.getPublishContributionsByFacultyName(facultyName);
+  }
+
+  @Get('getContributionsByFacultyName/:facultyName')
+  async getContributionsByFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
     return this.contributionService.getContributionsByFacultyName(facultyName);
   }
 
@@ -57,7 +64,7 @@ export class ContributionController {
     return this.contributionService.getContributionViaUserId(user_id);
   }
 
-  @Patch('updateContribution')
+  @Post('updateContribution')
   @UseInterceptors(FileInterceptor('articleFile')) 
   async updateContribution(
     @Body() createContributionDto: CreateContributionDto,
@@ -79,6 +86,22 @@ export class ContributionController {
     @Param('contributionId') contributionId: string
   ): Promise<void> {
     return this.contributionService.deleteContribution(contributionId);
+  }
+
+  @Get('getImage/:imageName')
+  async serveImage(@Param('imageName') imageName: string): Promise<string | null> {
+    return this.contributionService.getImageData(imageName);
+  }
+  
+  @Get('getFile/:filename')
+  getFile(@Param('filename') filename: string, @Res() res: Response): void {
+    const filePath = this.contributionService.getFilePath(filename);
+    res.download(filePath, filename); // This will initiate the file download
+  }
+
+  @Post('updateStatus')
+  updateStatus(@Body() updateStatusDto: UpdateStatusDto): Promise<Contribution> {
+    return this.contributionService.updateContributionStatus(updateStatusDto);
   }
   
 }

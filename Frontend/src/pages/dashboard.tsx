@@ -37,13 +37,13 @@ export const Dashboard: NextPage = () => {
     case "Student":
       dashboardContent = <Student userId={userId} />;
       break;
-    case "MarketingCoordinator":
+    case "Marketing Coordinator":
       dashboardContent = <Mkcoordinator userId={userId} />;
       break;
     case "Admin":
       dashboardContent = <Administrator userId={userId} />;
       break;
-      case "MarketingManager":
+      case "Marketing Manager":
       dashboardContent = <Administrator userId={userId} />;
       break;
       case "Guest":
