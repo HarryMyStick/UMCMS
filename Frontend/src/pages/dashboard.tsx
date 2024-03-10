@@ -5,7 +5,10 @@ import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import Student from "../components/student";
 import Administrator from "~/components/administrator";
-import Mkcoordinator from "~/components/mkCoordinator";
+
+import Guest from "~/components/guest";
+import MarketingManager from "~/components/mkmanager";
+import Mkcoordinator from "~/components/mkcoordinator";
 
 export const Dashboard: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -44,10 +47,10 @@ export const Dashboard: NextPage = () => {
       dashboardContent = <Administrator userId={userId} />;
       break;
       case "MarketingManager":
-      dashboardContent = <Administrator userId={userId} />;
+      dashboardContent = <MarketingManager userId={userId} />;
       break;
       case "Guest":
-      dashboardContent = <Administrator userId={userId} />;
+      dashboardContent = <Guest userId={userId} />;
       break;
     default:
       dashboardContent = null;
