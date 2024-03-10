@@ -36,7 +36,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [descriptionValue, setDescriptionValue] = useState<string>('');
 
   const [isEditing, setIsEditing] = useState(false);
-  
+  const [agree, setAgree] = useState(false);
+  const [formSent, setFormSent] = useState(false);
+
+  const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAgree(e.target.checked);
+  };
+
 
 
   const handleEditProfile = () => {
@@ -52,12 +58,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-      await fetchUploadData(); // Gửi dữ liệu
-      resetForm(); // Đặt lại form sau khi gửi dữ liệu
+        await fetchUploadData(); // Gửi dữ liệu
+        resetForm(); // Đặt lại form sau khi gửi dữ liệu
+        setAgree(false); // Đặt lại trạng thái của checkbox
+        setFormSent(true); // Đặt trạng thái của form thành đã gửi
     } catch (error) {
-      console.error('Error handling file upload:', error);
+        console.error('Error handling file upload:', error);
     }
-  };
+};
 
   const resetForm = () => {
     // Đặt lại trạng thái của các trường trong form
@@ -65,6 +73,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     setImageFiles(null);
     setTitleValue('');
     setDescriptionValue('');
+
     // Đặt lại trạng thái của các trường khác nếu cần thiết
   };
   // end method reset form submit contributions
@@ -329,13 +338,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                         </h6>
                         <button
                           onClick={() => handleSentFile()}
-                          className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                          disabled={!agree}
+                          className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
+                            }`}
                           type="button"
                         >
                           Sent File
                         </button>
                       </div>
                     </div>
+
                     <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                       <form>
                         {errorMessage && (
@@ -343,10 +355,12 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             {errorMessage}
                           </div>
                         )}
+
                         <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
+
                                 <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
                                   Title:
                                 </label>
@@ -439,6 +453,18 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 </label>
                                 {wordFile && <p>{wordFile.name}</p>}
                               </div>
+                            </div>
+                            <div className="relative mb-3 w-full">
+                              <label className="inline-flex items-center mt-3">
+                                <input
+                                  type="checkbox"
+                                  className="form-checkbox h-5 w-5 text-gray-600"
+                                  checked={agree}
+                                  onChange={handleAgreeChange}
+                                  disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                />
+                                <span className="ml-2 text-gray-700">You can only submit Word files and PNG images, and please ensure that you are the author of the submitted content.</span>
+                              </label>
                             </div>
                           </div>
                         </div>
