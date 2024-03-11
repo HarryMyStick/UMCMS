@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import { UpdateStatusDto } from './models/dto/update_status.dto';
 import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
 import { Response } from 'express';
+import { UpdateCommentDto } from './models/dto/update_comment.dto';
 
 @ApiTags('Contribution')
 @Controller('contribution')
@@ -102,6 +103,11 @@ export class ContributionController {
   @Post('updateStatus')
   updateStatus(@Body() updateStatusDto: UpdateStatusDto): Promise<Contribution> {
     return this.contributionService.updateContributionStatus(updateStatusDto);
+  }
+
+  @Post('updateComment')
+  updateComment(@Body() updateCommentDto: UpdateCommentDto): Promise<Contribution> {
+    return this.contributionService.updateContributionComment(updateCommentDto);
   }
   
 }
