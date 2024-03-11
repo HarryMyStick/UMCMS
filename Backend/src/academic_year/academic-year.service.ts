@@ -35,4 +35,8 @@ export class AcademicYearService {
     }
     return academicYear;
   }
+
+  async getAllAcademicYear(): Promise<AcademicYear[]> {
+    return this.academicYearRepository.find();
+  }
 }

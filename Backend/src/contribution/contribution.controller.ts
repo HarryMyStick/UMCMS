@@ -6,10 +6,11 @@ import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import * as fs from 'fs';
-import { UpdateStatusDto } from './models/dto/update_status.dto';
-import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
+import { UpdateStatusDto } from './models/dto/update-status.dto';
+import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.dto';
 import { Response } from 'express';
-import { UpdateCommentDto } from './models/dto/update_comment.dto';
+import { UpdateCommentDto } from './models/dto/update-comment.dto';
+import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 
 @ApiTags('Contribution')
 @Controller('contribution')
@@ -53,6 +54,16 @@ export class ContributionController {
   @Get('getPublishContributionsByFacultyName/:facultyName')
   async getPublishContributionsByFacultyName(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
     return this.contributionService.getPublishContributionsByFacultyName(facultyName);
+  }
+
+  @Post('getPublishContributionsByFacultyNameAndByYear')
+  getPublishContributionsByFacultyNameAndByYear(@Body() contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
+    return this.contributionService.getPublishContributionsByFacultyNameAndByYear(contributionYearFacDto);
+  }
+
+  @Post('getContributionsByFacultyNameAndByYear')
+  getContributionsByFacultyNameAndByYear(@Body() contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
+    return this.contributionService.getContributionsByFacultyNameAndByYear(contributionYearFacDto);
   }
 
   @Get('getContributionsByFacultyName/:facultyName')

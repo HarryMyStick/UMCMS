@@ -18,4 +18,9 @@ export class AcademicYearController {
   async getAcademicYearByYear(@Param('year') year: string): Promise<AcademicYear> {
     return this.academicYearService.getAcademicYearByYear(year);
   }
+
+  @Get('getAllAcademicYear')
+  async getAllAcademicYear(): Promise<AcademicYear[]> {
+    return this.academicYearService.getAllAcademicYear();
+  }
 }
