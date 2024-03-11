@@ -34,7 +34,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const lastName = useRef<HTMLInputElement>(null);
   const email = useRef<HTMLInputElement>(null);
   const phoneNumber = useRef<HTMLInputElement>(null);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [notification, setNotification] = useState({ type: "", message: "" });
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -46,6 +46,35 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
 
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
 
+
+  const tabs = ["Home", "Manage Contribution", "Profile"];
+  const [activeTab, setActiveTab] = useState(0);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      displayMessage("", "");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  });
+
+  useEffect(() => {
+    fetchProfileData();
+    showAllMagazineBelongToFaculty();
+    showMagazineOfStudent();
+  }, []);
+
+  const displayMessage = (type: any, message: any) => {
+    setNotification({ type, message });
+  };
+
+  const handleLogout = () => {
+    router.push("/login");
+  };
+
+  const handleClick = (index: number) => {
+    setActiveTab(index);
+  };
+
   const handleEditProfile = () => {
     setIsEditing(true);
   };
@@ -54,35 +83,8 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     setEditingRowIndex(index);
   };
 
-  const handleSaveStatus = async (index: number, contributionId: string, contributionStatus: string) => {
-    if (contributionStatus !== "" && "default") {
-      try {
-        const response = await fetch(`${urlBackend}/contribution/updateStatus`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contribution_id: contributionId,
-            status: contributionStatus,
-          }),
-        });
-        if (response.ok) {
-          showAllMagazineBelongToFaculty();
-          showMagazineOfStudent();
-          setEditingRowIndex(null);
-          setEditedStatus("");
-        } else {
-          console.error("Error:", response.statusText);
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    }
-  };
-
   const handleCancelEdit = () => {
-    setEditingRowIndex(null); // Reset editing state
+    setEditingRowIndex(null);
     setEditedStatus("");
   };
 
@@ -95,54 +97,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     setEditingCommentRowIndex(null);
     setEditedComment("");
   };
-
-  const handleSaveComment = async (index: number, contributionId: string, comment: string) => {
-    if (comment !== "") {
-      try {
-        const response = await fetch(`${urlBackend}/contribution/updateComment`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contribution_id: contributionId,
-            comment: comment,
-          }),
-        });
-        if (response.ok) {
-          showAllMagazineBelongToFaculty();
-          showMagazineOfStudent();
-          setEditingCommentRowIndex(null);
-          setEditedComment("");
-        } else {
-          console.error("There are some error occur.");
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    }
-  };
-
-  const handleLogout = () => {
-    router.push("/login");
-  };
-
-  const tabs = ["Home", "Manage Contribution", "Profile"];
-  const [activeTab, setActiveTab] = useState(0);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setErrorMessage('');
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [errorMessage]);
-
-
-  useEffect(() => {
-    fetchProfileData();
-    showAllMagazineBelongToFaculty();
-    showMagazineOfStudent();
-  }, []);
 
   const showAllMagazineBelongToFaculty = async () => {
     try {
@@ -178,14 +132,12 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
             }
           }
           setPublishMagazines(magazineData);
-          console.log(magazineData);
         } else {
-          console.error("Magazine cannot loading.");
+          console.log("Magazine cannot loading.");
           return;
         }
       } else {
-        console.log("not ok");
-        console.error("Cannot get faculty by user_id.");
+        console.log("Cannot get faculty by user_id.");
       }
     } catch (error) {
       console.error("Error fetching profile data:", error);
@@ -226,13 +178,11 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
             }
           }
           setMagazines(magazineData);
-          console.log(magazineData);
         } else {
-          console.error("Magazine cannot loading.");
+          console.log("Magazine cannot loading.");
           return;
         }
       } else {
-        console.log("not ok");
         console.error("Cannot get faculty by user_id.");
       }
     } catch (error) {
@@ -240,32 +190,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     }
   };
 
-  async function handleFileDownload(filename: string) {
-    try {
-      const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        console.error("Error downloading file:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Fetch error:", error);
-    }
-  }
-
-  //Start view profile
   const fetchProfileData = async () => {
     try {
       const response = await fetch(
@@ -297,7 +221,64 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   if (!profile) {
     return <div>Loading...</div>;
   }
-  //End view profile
+
+  const handleSaveStatus = async (index: number, contributionId: string, contributionStatus: string) => {
+    if (contributionStatus !== "" && "default") {
+      try {
+        const response = await fetch(`${urlBackend}/contribution/updateStatus`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contribution_id: contributionId,
+            status: contributionStatus,
+          }),
+        });
+        if (response.ok) {
+          displayMessage("success", "Change status successfully.");
+          showAllMagazineBelongToFaculty();
+          showMagazineOfStudent();
+          setEditingRowIndex(null);
+          setEditedStatus("");
+        } else {
+          console.error("Error:", response.statusText);
+          displayMessage("error", "Change status unsuccessfully due to some error.");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+  };
+
+  const handleSaveComment = async (index: number, contributionId: string, comment: string) => {
+    if (comment !== "") {
+      try {
+        const response = await fetch(`${urlBackend}/contribution/updateComment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contribution_id: contributionId,
+            comment: comment,
+          }),
+        });
+        if (response.ok) {
+          displayMessage("success", "Change comment successfully.");
+          showAllMagazineBelongToFaculty();
+          showMagazineOfStudent();
+          setEditingCommentRowIndex(null);
+          setEditedComment("");
+        } else {
+          displayMessage("error", "Change comment unsuccessfully due to some error.");
+          console.error("There are some error occur.");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+  };
 
   const handleSaveProfile = async () => {
     const fieldFirstName = firstName.current?.value.trim();
@@ -305,38 +286,58 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     const fieldEmail = email.current?.value.trim();
     const fieldPhoneNumber = phoneNumber.current?.value.trim();
     if (!fieldFirstName || !fieldLastName || !fieldEmail || !fieldPhoneNumber) {
-      setErrorMessage("Please enter full information.");
+      displayMessage("warning", "Please enter full information.");
       return;
     }
     try {
-      const response = await fetch(`${urlBackend}/profile/updateProfile`, {
+      const saveProfileResponse = await fetch(`${urlBackend}/profile/updateProfile`, {
         method: "POST",
-        body: JSON.stringify(
-          {
-            profile_id: profile.profile_id,
-            first_name: fieldFirstName,
-            last_name: fieldLastName,
-            email: fieldEmail,
-            phone_number: fieldPhoneNumber
-          }
-        ),
         headers: {
           "Content-Type": "application/json",
         },
-
+        body: JSON.stringify({
+          profile_id: profile.profile_id,
+          first_name: fieldFirstName,
+          last_name: fieldLastName,
+          email: fieldEmail,
+          phone_number: fieldPhoneNumber
+        }),
       });
-      if (response.ok) {
+      if (saveProfileResponse.ok) {
+        setIsEditing(false);
+        displayMessage("success", "Change profile successfully.");
       } else {
+        displayMessage("error", "Change profile unsuccessfully due to some error.");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
     }
-    setIsEditing(false);
   };
 
-  const handleClick = (index: number) => {
-    setActiveTab(index);
-  };
+  async function handleFileDownload(filename: string) {
+    try {
+      const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.error("Error downloading file:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+  }
 
   return (
     <div className="flex flex-col bg_white">
@@ -458,6 +459,20 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
+                  {notification && (
+                    <div
+                      className={`p-3 text-sm rounded-md ${notification.type === "error"
+                        ? "bg-red-100 border border-red-300 text-red-900"
+                        : notification.type === "warning"
+                          ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                          : notification.type === "success"
+                            ? "bg-green-100 border border-green-300 text-green-900"
+                            : ""
+                        }`}
+                    >
+                      {notification.message}
+                    </div>
+                  )}
                   <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                     <thead className="bg-gray-50">
                       <tr>
@@ -599,8 +614,36 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
             {/* Start View Profile */}
             {index === 2 && (
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Profile information
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Your profile information<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
+                    {notification && (
+                      <div
+                        className={`p-3 text-sm rounded-md ${notification.type === "error"
+                          ? "bg-red-100 border border-red-300 text-red-900"
+                          : notification.type === "warning"
+                            ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                            : notification.type === "success"
+                              ? "bg-green-100 border border-green-300 text-green-900"
+                              : ""
+                          }`}
+                      >
+                        {notification.message}
+                      </div>
+                    )}
                     <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
                       <div className="mb-0 rounded-t bg_nude px-6 py-6">
                         <div className="flex justify-between text-center ">
@@ -611,7 +654,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                             <button
                               className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                               type="button"
-                              onClick={handleSaveProfile}
+                              onClick={() => handleSaveProfile()}
                             >
                               Save
                             </button>
@@ -619,7 +662,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                             <button
                               className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                               type="button"
-                              onClick={handleEditProfile}
+                              onClick={() => handleEditProfile()}
                             >
                               Edit
                             </button>
@@ -627,88 +670,90 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                         </div>
                       </div>
                       <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
-                        <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
-                          Profile Information
-                        </h6>
-                        <div className="flex flex-wrap">
-                          <div className="w-full px-4 lg:w-6/12">
-                            <div className="relative mb-3 w-full">
-                              <label
-                                className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                htmlFor="first_name"
-                              >
-                                First Name
-                              </label>
-                              <input
-                                type="text"
-                                className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                  }`}
-                                value={profile.first_name}
-                                onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                                ref={firstName}
-                                readOnly={!isEditing}
-                              />
+                        <form>
+                          <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                            Manage Profile
+                          </h6>
+                          <div className="flex flex-wrap">
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="first_name"
+                                >
+                                  First Name
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
+                                    }`}
+                                  value={profile.first_name}
+                                  onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
+                                  ref={firstName}
+                                  readOnly={!isEditing}
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="last_name"
+                                >
+                                  Last Name
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
+                                    }`}
+                                  value={profile.last_name}
+                                  onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
+                                  ref={lastName}
+                                  readOnly={!isEditing}
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="email"
+                                >
+                                  Email Address
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
+                                    }`}
+                                  value={profile.email}
+                                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                                  ref={email}
+                                  readOnly={!isEditing}
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="phone_number"
+                                >
+                                  Phone Number
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
+                                    }`}
+                                  value={profile.phone_number}
+                                  onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
+                                  ref={phoneNumber}
+                                  readOnly={!isEditing}
+                                />
+                              </div>
                             </div>
                           </div>
-                          <div className="w-full px-4 lg:w-6/12">
-                            <div className="relative mb-3 w-full">
-                              <label
-                                className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                htmlFor="last_name"
-                              >
-                                Last Name
-                              </label>
-                              <input
-                                type="text"
-                                className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                  }`}
-                                value={profile.last_name}
-                                onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                                ref={lastName}
-                                readOnly={!isEditing}
-                              />
-                            </div>
-                          </div>
-                          <div className="w-full px-4 lg:w-6/12">
-                            <div className="relative mb-3 w-full">
-                              <label
-                                className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                htmlFor="email"
-                              >
-                                Email Address
-                              </label>
-                              <input
-                                type="text"
-                                className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                  }`}
-                                value={profile.email}
-                                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                ref={email}
-                                readOnly={!isEditing}
-                              />
-                            </div>
-                          </div>
-                          <div className="w-full px-4 lg:w-6/12">
-                            <div className="relative mb-3 w-full">
-                              <label
-                                className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                htmlFor="phone_number"
-                              >
-                                Phone Number
-                              </label>
-                              <input
-                                type="text"
-                                className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                  }`}
-                                value={profile.phone_number}
-                                onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
-                                ref={phoneNumber}
-                                readOnly={!isEditing}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <hr className="border-b-1 border-blueGray-300 mt-6" />
+                          <hr className="border-b-1 border-blueGray-300 mt-6" />
+                        </form>
                       </div>
                     </div>
                   </div>
