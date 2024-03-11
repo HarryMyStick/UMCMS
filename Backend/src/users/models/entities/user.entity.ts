@@ -26,7 +26,7 @@ export class User extends BaseEntity {
   @JoinColumn({ name: 'role_id' }) 
   role: Role;
 
-  @OneToOne(() => Faculty)
+  @ManyToOne(() => Faculty)
   @JoinColumn({ name: 'faculty_id' })
   faculty_id: Faculty;
 }

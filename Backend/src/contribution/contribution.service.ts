@@ -5,7 +5,11 @@ import { Repository } from 'typeorm';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { User } from 'src/users/models/entities/user.entity';
 import { AcademicYear } from 'src/academic_year/models/entities/academic-year.entity';
+import { UpdateStatusDto } from './models/dto/update_status.dto';
 import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
+import * as path from 'path';
+import * as fs from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class ContributionService {
@@ -59,14 +63,28 @@ export class ContributionService {
     return cont;
   }
 
+  async getPublishContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status = :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
       .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .where('f.faculty_name = :facultyName', { facultyName })
-      .andWhere('sc.status = :status', { status: 'Published' })
-      .getMany();
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
   }
 
   async getContributionViaUserId(userId: string): Promise<Contribution[]> {
@@ -117,6 +135,47 @@ export class ContributionService {
       throw new NotFoundException('Contribution not found');
     }
     await this.contributionRepository.remove(contribution);
+  }
+
+  async getImageData(imageName: string): Promise<string | null> {
+    const imagePath = join(__dirname, '..', '..', '..', 'Backend', 'src', 'contribution', 'uploads', 'img', imageName);
+    
+    return new Promise((resolve, reject) => {
+      fs.readFile(imagePath, (err, data) => {
+        if (err) {
+          if (err.code === 'ENOENT') {
+            resolve(null);
+            console.log("Image not found");
+          } else {
+            reject(err); 
+          }
+        } else {
+          const base64Image = Buffer.from(data).toString('base64');
+          const imageUrl = `data:image/jpeg;base64,${base64Image}`;
+          resolve(imageUrl); 
+        }
+      });
+    });
+  }
+
+  getFilePath(filename: string): string {
+    // Assuming the files are stored in the 'uploads' directory
+    const filePath = path.join(__dirname, '..', '..', '..', 'Backend', 'src', 'contribution', 'uploads', filename);
+    return filePath;
+  }
+
+  async updateContributionStatus(updateStatusDto: UpdateStatusDto): Promise<Contribution> {
+    const contribution = await this.contributionRepository.findOne({
+      where: [{ contribution_id: updateStatusDto.contribution_id }],
+    });
+    
+    if (!contribution) {
+      throw new NotFoundException('Contribution not found');
+    }
+    contribution.status = updateStatusDto.status;
+    const updatedContribution = await contribution.save();
+    
+    return updatedContribution;
   }
 
 }
