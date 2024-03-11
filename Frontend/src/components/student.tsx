@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { urlBackend } from "../global";
 import Header from "./header";
 
+
 interface NavProps {
   userId: string;
 }
@@ -18,6 +19,8 @@ interface Profile {
   phone_number: string;
   user_id: string;
 }
+
+
 const Student: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
   const firstName = useRef<HTMLInputElement>(null);
@@ -32,6 +35,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [descriptionValue, setDescriptionValue] = useState<string>('');
 
   const [isEditing, setIsEditing] = useState(false);
+  const [agree, setAgree] = useState(false);
+  const [formSent, setFormSent] = useState(false);
+
+  const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAgree(e.target.checked);
+  };
+
+
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -42,23 +53,25 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }, 3000);
     return () => clearTimeout(timeout);
   }, [errorMessage]);
-  
+
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
       await fetchUploadData(); // Gửi dữ liệu
-      resetForm(); // Đặt lại form sau khi gửi dữ liệu
+      setAgree(false); // Đặt lại trạng thái của checkbox
+      // setFormSent(true); // Đặt trạng thái của form thành đã gửi
     } catch (error) {
       console.error('Error handling file upload:', error);
     }
   };
 
-  const resetForm = () => {
+  const resetForm = async () => {
     // Đặt lại trạng thái của các trường trong form
     setWordFile(null);
     setImageFiles(null);
     setTitleValue('');
     setDescriptionValue('');
+
     // Đặt lại trạng thái của các trường khác nếu cần thiết
   };
   // end method reset form submit contributions
@@ -74,7 +87,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     // For example, clearing local storage or session
     router.push("/login"); // Redirect to login page after logout
   };
-  const tabs = ["Home", "Magazine", "Submit Contribution", "Profile"];
+  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
   const [activeTab, setActiveTab] = useState(0);
 
   //Start view profile
@@ -163,13 +176,30 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // Start Upload
 
   const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setImageFiles(event.target.files[0]);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const fileType = selectedFile.type;
+      if (fileType === 'image/png' || fileType === 'image/jpeg') {
+        setImageFiles(selectedFile);
+      } else {
+        // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
+        setErrorMessage('Please select a PNG or JPEG image file.');
+        event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
+      }
     }
   };
+
   const handleWordFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setWordFile(event.target.files[0]);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const fileName = selectedFile.name;
+      if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+        setWordFile(selectedFile);
+      } else {
+        // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
+        setErrorMessage('Please select a Word document file.');
+        event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
+      }
     }
   };
 
@@ -177,53 +207,59 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     try {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
-      if(fieldTitle === "" || fieldDescription ===""){
+      if (fieldTitle === "" || fieldDescription === "") {
         setErrorMessage("Please enter full information.");
       }
-      const formData = new FormData();
-      formData.append("user_id", userId);
-      formData.append("article_title", fieldTitle);
-      formData.append("article_description", fieldDescription);
-      formData.append("submission_date", "2024-03-09T12:00:00Z");
-      formData.append("edit_date", "2024-03-09T12:00:00Z");
-      formData.append("status", "Published");
-      formData.append("academic_year_id", "2891d2f3-8862-4b6a-8e0c-ee3ab56a1514");
-      formData.append("articleFile", wordFile as Blob);
-
-
-      const response = await fetch(`${urlBackend}/contribution/createContribution/`, {
-        method: "POST",
-        body: formData,
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/2024`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-
-      if (response.ok) {
-        const data = await response.json(); // Assuming the response body contains JSON data
-        const contributionId = data.contribution_id;
-        const dataFormImage = new FormData();
-        dataFormImage.append("contribution_id", contributionId);
-        dataFormImage.append("imageFile", imageFile as Blob);
-
-        const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
+      if (getAcademicYearId.ok) {
+        const data = await getAcademicYearId.json();
+        const academic_year_id = data.academic_year_id;
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("article_title", fieldTitle);
+        formData.append("article_description", fieldDescription);
+        formData.append("submission_date", "2024-03-09T12:00:00Z");
+        formData.append("edit_date", "2024-03-09T12:00:00Z");
+        formData.append("status", "Published");
+        formData.append("academic_year_id", academic_year_id);
+        formData.append("articleFile", wordFile as Blob);
+        const createContribution = await fetch(`${urlBackend}/contribution/createContribution/`, {
           method: "POST",
-          body: dataFormImage,
+          body: formData,
         });
+        if (createContribution.ok) {
+          const data = await createContribution.json(); // Assuming the response body contains JSON data
+          const contributionId = data.contribution_id;
+          const dataFormImage = new FormData();
+          dataFormImage.append("contribution_id", contributionId);
+          dataFormImage.append("imageFile", imageFile as Blob);
 
-        if (uploadImageResponse.ok) {
-          // Image upload successful
+          const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
+            method: "POST",
+            body: dataFormImage,
+          });
+          if (uploadImageResponse.ok) {
+            // Image upload successful
+          } else {
+            setErrorMessage("Please enter full information.");
+            return;
+          }
         } else {
-          setErrorMessage("Please enter full information.");
-          return;
+          // Handle error
         }
-      } else {
-        // Handle error
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Error fetching profile data:", error);
     }
-  };
+  }
+
   //End Upload
-
-
 
   return (
     <div className="flex flex-col bg_white">
@@ -283,28 +319,65 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           >
             {index === 0 && (
               <div>
-                <Header />
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Home
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Magazine <span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             )}
-            {index === 1 && <div>Content of 1 tab</div>}
-            {index === 2 &&
+            {index === 1 &&
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Contribute article
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Contribute your article magazine<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                   <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
                     <div className="mb-0 rounded-t bg_nude px-6 py-6">
-                      <div className="flex justify-between text-center ">
-                        <h6 className="text-blueGray-700 text-xl font-bold">
+                      <div className="flex items-center text-center">
+                        <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
                           My Contribution
                         </h6>
                         <button
                           onClick={() => handleSentFile()}
-                          className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                          disabled={!agree}
+                          className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
+                            }`}
                           type="button"
                         >
                           Sent File
                         </button>
+                        <button
+                          onClick={() => resetForm()}
+                          className={`rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
+                          type="button"
+                        >
+                          Clean Form
+                        </button>
                       </div>
                     </div>
+
                     <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                       <form>
                         {errorMessage && (
@@ -312,10 +385,12 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             {errorMessage}
                           </div>
                         )}
+
                         <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
+
                                 <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
                                   Title:
                                 </label>
@@ -362,6 +437,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                       <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
+                                      <input
+                                        type="file"
+                                        name="imageFiles"
+                                        id="imageFiles"
+                                        className="sr-only"
+                                        accept="image/png, image/jpeg" // Only PNG and JPEG images are allowed to be imported
+                                        onChange={handleImageFileChange}
+                                      />
                                     </div>
                                   </label>
                                 </div>
@@ -386,6 +469,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                       <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
+                                      <input
+                                        type="file"
+                                        name="wordFile"
+                                        id="wordFile"
+                                        className="sr-only"
+                                        accept=".docx, .doc" // Chỉ cho phép nhập file Word
+                                        onChange={handleWordFileChange}
+                                      />
                                     </div>
                                   </label>
                                 </div>
@@ -409,6 +500,18 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 {wordFile && <p>{wordFile.name}</p>}
                               </div>
                             </div>
+                            <div className="relative mb-3 w-full">
+                              <label className="inline-flex items-center mt-3">
+                                <input
+                                  type="checkbox"
+                                  className="form-checkbox h-5 w-5 text-gray-600"
+                                  checked={agree}
+                                  onChange={handleAgreeChange}
+                                  disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                />
+                                <span className="ml-2 text-gray-700">You can only submit Word files and PNG images, and please ensure that you are the author of the submitted content.</span>
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </form>
@@ -417,9 +520,41 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             }
+            {index === 2 &&
+              <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Manage contributions
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Manage my contributions <span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
             {/* Start View Profile */}
             {index === 3 && (
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                      Profile information
+                    </p>
+                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                      Your profile information<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-12 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                     <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
@@ -450,7 +585,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                       <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                         <form>
                           <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
-                            Profile Information
+                            Manage Profile
                           </h6>
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
