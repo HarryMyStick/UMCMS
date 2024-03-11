@@ -457,7 +457,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                     </h1>
                   </div>
                 </div>
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" style={{ maxWidth: "75%" }}>
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
                   <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                     <thead className="bg-gray-50">
                       <tr>
