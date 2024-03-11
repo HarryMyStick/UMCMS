@@ -33,6 +33,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const [titleValue, setTitleValue] = useState<string>('');
   const [descriptionValue, setDescriptionValue] = useState<string>('');
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [agree, setAgree] = useState(false);
@@ -44,8 +45,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
 
 
-  const handleEditProfile = () => {
-    setIsEditing(true);
+  const handleEditProfile = (index: number) => {
+    setEditingRowIndex(index);
   };
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -127,7 +128,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   }
   //End view profile
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = async (index: number) => {
     const fieldFirstName = firstName.current?.value.trim();
     const fieldLastName = lastName.current?.value.trim();
     const fieldEmail = email.current?.value.trim();
@@ -154,7 +155,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
       });
       if (response.ok) {
-        // Cập nhật trạng thái chỉnh sửa thành false hoặc xử lý thông báo thành công
+        setEditingRowIndex(null);
       } else {
         // Xử lý lỗi
       }
@@ -513,6 +514,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </label>
                             </div>
                           </div>
+                          <hr className="border-b-1 border-blueGray-300 mt-6" />
                         </div>
                       </form>
                     </div>
@@ -558,125 +560,177 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 <div>
                   <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                     <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
-                      <div className="mb-0 rounded-t bg_nude px-6 py-6">
-                        <div className="flex justify-between text-center ">
-                          <h6 className="text-blueGray-700 text-xl font-bold">
-                            My Account
-                          </h6>
-                          {isEditing ? (
-                            <button
-                              className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
-                              type="button"
-                              onClick={handleSaveProfile}
-                            >
-                              Save
-                            </button>
-                          ) : (
-                            <button
-                              className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
-                              type="button"
-                              onClick={handleEditProfile}
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
-                        <form>
-                          <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
-                            Manage Profile
-                          </h6>
-                          <div className="flex flex-wrap">
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label
-                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                  htmlFor="first_name"
-                                >
-                                  First Name
-                                </label>
-                                <input
-                                  type="text"
-                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                    }`}
-                                  value={profile.first_name}
-                                  onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                                  ref={firstName}
-                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
-                                />
-                              </div>
-                            </div>
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label
-                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                  htmlFor="last_name"
-                                >
-                                  Last Name
-                                </label>
-                                <input
-                                  type="text"
-                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                    }`}
-                                  value={profile.last_name}
-                                  onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                                  ref={lastName}
-                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
-                                />
-                              </div>
-                            </div>
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label
-                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                  htmlFor="email"
-                                >
-                                  Email Address
-                                </label>
-                                <input
-                                  type="text"
-                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                    }`}
-                                  value={profile.email}
-                                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                  ref={email}
-                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
-                                />
-                              </div>
-                            </div>
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label
-                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
-                                  htmlFor="phone_number"
-                                >
-                                  Phone Number
-                                </label>
-                                <input
-                                  type="text"
-                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${isEditing ? '' : 'cursor-not-allowed'
-                                    }`}
-                                  value={profile.phone_number}
-                                  onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
-                                  ref={phoneNumber}
-                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
-                                />
-                              </div>
+
+                      {editingRowIndex === index ? (
+                        <div>
+                          <div className="mb-0 rounded-t bg_nude px-6 py-6">
+                            <div className="flex justify-between text-center ">
+                              <h6 className="text-blueGray-700 text-xl font-bold">
+                                My Account
+                              </h6>
+                              <button
+                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                type="button"
+                                onClick={() => handleSaveProfile(index)}
+                              >
+                                Save
+                              </button>
                             </div>
                           </div>
-                          <hr className="border-b-1 border-blueGray-300 mt-6" />
-                        </form>
-                      </div>
+                          <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
+                            <form>
+                              <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                                Manage Profile
+                              </h6>
+                              <div className="flex flex-wrap">
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="first_name"
+                                    >
+                                      First Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring`}
+                                      defaultValue={profile.first_name}
+                                      ref={firstName}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="last_name"
+                                    >
+                                      Last Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring`}
+                                      defaultValue={profile.last_name}
+                                      ref={lastName}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="email"
+                                    >
+                                      Email Address
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring`}
+                                      defaultValue={profile.email}
+                                      ref={email}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="phone_number"
+                                    >
+                                      Phone Number
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring`}
+                                      defaultValue={profile.phone_number}
+                                      ref={phoneNumber}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="mb-0 rounded-t bg_nude px-6 py-6">
+                            <div className="flex justify-between text-center ">
+                              <h6 className="text-blueGray-700 text-xl font-bold">
+                                My Account
+                              </h6>
+                              <button
+                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                type="button"
+                                onClick={() => handleEditProfile(index)}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
+                            <form>
+                              <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                                Manage Profile
+                              </h6>
+                              <div className="flex flex-wrap">
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="last_name">
+                                      First Name
+                                    </label>
+                                    <p>{profile.first_name}</p>
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="last_name">
+                                      Last Name
+                                    </label>
+                                    <p>{profile.last_name}</p>
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="last_name">
+                                      Email
+                                    </label>
+                                    <p>{profile.email}</p>
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label
+                                      className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                      htmlFor="last_name">
+                                      Phone Number
+                                    </label>
+                                    <p>{profile.phone_number}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      )}
+                      <hr className="border-b-1 border-blueGray-300 mt-6" />
                     </div>
+
                   </div>
+
                 </div>
               </div>
             )}
             {/* End View Profile */}
           </div>
-        ))}
-      </div>
+        ))
+        }
+      </div >
     </div >
   );
 };
