@@ -30,6 +30,10 @@ interface Magazine {
   p_first_name: string;
   p_last_name: string;
 }
+interface AcademicYear {
+  academic_year_id: string;
+  academic_year: string;
+}
 
 
 const Student: React.FC<NavProps> = ({ userId }) => {
@@ -51,6 +55,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [formSent, setFormSent] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
+  const [editedYear, setEditedYear] = useState("");
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [editedYearManage, setEditedYearManage] = useState("");
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAgree(e.target.checked);
@@ -67,9 +75,15 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       displayMessage("", "");
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [errorMessage]);
+  });
 
-
+  const handleChangeYear = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(year);
+    }
+  }
 
   // start method reset form submit contributions
   const handleSentFile = async () => {
@@ -78,7 +92,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       setAgree(false); // Đặt lại trạng thái của checkbox
       // setFormSent(true); // Đặt trạng thái của form thành đã gửi
     } catch (error) {
-      displayMessage("success","Saved successfully!")
+      displayMessage("success", "Saved successfully!")
     }
   };
 
@@ -108,33 +122,236 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   // Start View Contibution
   useEffect(() => {
+    if ((editedYear === "default") || (editedYear === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(editedYear);
+    }
+    if ((editedYearManage === "default") || (editedYearManage === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
+    }
     fetchProfileData();
-    showAllMagazineBelongToFaculty();
+    getAcademicYear();
   }, []);
-  async function handleFileDownload(filename: string) {
+  // Start delete contribution
+  const handleDelete = async (contributionId: string) => {
     try {
-      const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
+      const confirmDelete = window.confirm("Are you sure you want to delete this contribution?");
+      if (confirmDelete) {
+        const response = await fetch(`${urlBackend}/contribution/deleteContribution/${contributionId}`, {
+          method: 'DELETE',
+        });
+  
+        if (response.ok) {
+          // Xóa mục khỏi danh sách magazines nếu xóa thành công
+          setMagazines(magazines.filter(magazine => magazine.sc_contribution_id !== contributionId));
+          setNotification({ type: 'success', message: 'Contribution deleted successfully' });
+        } else {
+          setNotification({ type: 'error', message: 'Failed to delete contribution' });
+        }
+      }     
+    } catch (error) {
+      console.error('Error deleting contribution:', error);
+      setNotification({ type: 'error', message: 'An error occurred while deleting contribution' });
+    }
+  };
+  const getAcademicYear = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
       });
       if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        console.error("Error downloading file:", response.statusText);
+        const academicYearData = await response.json();
+        setAcademicYears(academicYearData);
       }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  }
+  // End delete contribution
+
+  async function handleFileDownload(filename: string) {
+    try {
+        const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          console.error("Error downloading file:", response.statusText);
+        }
     } catch (error) {
       console.error("Fetch error:", error);
     }
   }
+
+  const handleChangeYearNonPublish = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(year);
+    }
+  }
+  const showMagazineOfStudent = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyName/${facultyName}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          }
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.error("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+  const showAllMagazineByFacultyAndYearNonPublish = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: facultyName,
+            year: year,
+          }),
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.log("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+
+  const showAllMagazineByFacultyAndYear = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getPublishContributionsByFacultyNameAndByYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: facultyName,
+            year: year,
+          }),
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setPublishMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.log("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+
   const showAllMagazineBelongToFaculty = async () => {
     try {
       const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
@@ -422,6 +639,25 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYear}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYear(selectedValue);
+                        handleChangeYear(selectedValue);
+                      }}
+                    >
+                      <option value="default">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <article>
                     <section className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
                       {publishMagazines.map((publishMagazines) => (
@@ -475,20 +711,20 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                   <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
                     <div className="mb-0 rounded-t bg_nude px-6 py-6">
-                    {notification && (
-                          <div
-                            className={`p-3 text-sm rounded-md ${notification.type === "error"
-                              ? "bg-red-100 border border-red-300 text-red-900"
-                              : notification.type === "warning"
-                                ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
-                                : notification.type === "success"
-                                  ? "bg-green-100 border border-green-300 text-green-900"
-                                  : ""
-                              }`}
-                          >
-                            {notification.message}
-                          </div>
-                        )}
+                      {notification && (
+                        <div
+                          className={`p-3 text-sm rounded-md ${notification.type === "error"
+                            ? "bg-red-100 border border-red-300 text-red-900"
+                            : notification.type === "warning"
+                              ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                              : notification.type === "success"
+                                ? "bg-green-100 border border-green-300 text-green-900"
+                                : ""
+                            }`}
+                        >
+                          {notification.message}
+                        </div>
+                      )}
                       <div className="flex items-center text-center">
                         <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
                           My Contribution
@@ -660,6 +896,84 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     </h1>
                   </div>
                 </div>
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
+                  {notification && (
+                    <div
+                      className={`p-3 text-sm rounded-md ${notification.type === "error"
+                        ? "bg-red-100 border border-red-300 text-red-900"
+                        : notification.type === "warning"
+                          ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                          : notification.type === "success"
+                            ? "bg-green-100 border border-green-300 text-green-900"
+                            : ""
+                        }`}
+                    >
+                      {notification.message}
+                    </div>
+                  )}
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYearManage}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYearManage(selectedValue);
+                        handleChangeYearNonPublish(selectedValue);
+                      }}
+                    >
+                      <option value="default">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Image</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Author</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {magazines.map((magazine, index) => (
+                        <tr key={magazine.sc_contribution_id} className="bg-white text-center">
+                          <td className="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                            <div className="flex-shrink-0 h-20 w-20">
+                              <img className="h-20 w-20 rounded-full" src={magazine.sc_image_url} alt={magazine.sc_article_title} />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm font-medium text-gray-900">{magazine.sc_article_title}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm font-medium text-gray-900">{magazine.p_first_name} {magazine.p_last_name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm text-gray-900">{magazine.sc_article_description}</div>
+                          </td>
+                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                            <div className="text-sm text-gray-900">{magazine.sc_status}</div>
+                          </td>
+                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                            <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-red-500 hover:text-red-700 focus:outline-none">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                              </svg>
+                            </button>
+                          </td>
+
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
               </div>
             }
             {/* Start View Profile */}
