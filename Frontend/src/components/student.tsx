@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
 import Header from "./header";
-import StudentContribution from "./studentcontribution";
 
 
 interface NavProps {
@@ -58,16 +57,15 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-        await fetchUploadData(); // Gửi dữ liệu
-        resetForm(); // Đặt lại form sau khi gửi dữ liệu
-        setAgree(false); // Đặt lại trạng thái của checkbox
-        setFormSent(true); // Đặt trạng thái của form thành đã gửi
+      await fetchUploadData(); // Gửi dữ liệu
+      setAgree(false); // Đặt lại trạng thái của checkbox
+      // setFormSent(true); // Đặt trạng thái của form thành đã gửi
     } catch (error) {
-        console.error('Error handling file upload:', error);
+      console.error('Error handling file upload:', error);
     }
-};
+  };
 
-  const resetForm = () => {
+  const resetForm = async () => {
     // Đặt lại trạng thái của các trường trong form
     setWordFile(null);
     setImageFiles(null);
@@ -178,13 +176,30 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // Start Upload
 
   const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setImageFiles(event.target.files[0]);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const fileType = selectedFile.type;
+      if (fileType === 'image/png' || fileType === 'image/jpeg') {
+        setImageFiles(selectedFile);
+      } else {
+        // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
+        setErrorMessage('Please select a PNG or JPEG image file.');
+        event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
+      }
     }
   };
+
   const handleWordFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setWordFile(event.target.files[0]);
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      const fileName = selectedFile.name;
+      if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+        setWordFile(selectedFile);
+      } else {
+        // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
+        setErrorMessage('Please select a Word document file.');
+        event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
+      }
     }
   };
 
@@ -195,47 +210,55 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (fieldTitle === "" || fieldDescription === "") {
         setErrorMessage("Please enter full information.");
       }
-      const formData = new FormData();
-      formData.append("user_id", userId);
-      formData.append("article_title", fieldTitle);
-      formData.append("article_description", fieldDescription);
-      formData.append("submission_date", "2024-03-09T12:00:00Z");
-      formData.append("edit_date", "2024-03-09T12:00:00Z");
-      formData.append("status", "Published");
-      formData.append("academic_year_id", "2891d2f3-8862-4b6a-8e0c-ee3ab56a1514");
-      formData.append("articleFile", wordFile as Blob);
-
-
-      const response = await fetch(`${urlBackend}/contribution/createContribution/`, {
-        method: "POST",
-        body: formData,
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/2024`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-
-      if (response.ok) {
-        const data = await response.json(); // Assuming the response body contains JSON data
-        const contributionId = data.contribution_id;
-        const dataFormImage = new FormData();
-        dataFormImage.append("contribution_id", contributionId);
-        dataFormImage.append("imageFile", imageFile as Blob);
-
-        const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
+      if (getAcademicYearId.ok) {
+        const data = await getAcademicYearId.json();
+        const academic_year_id = data.academic_year_id;
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("article_title", fieldTitle);
+        formData.append("article_description", fieldDescription);
+        formData.append("submission_date", "2024-03-09T12:00:00Z");
+        formData.append("edit_date", "2024-03-09T12:00:00Z");
+        formData.append("status", "Published");
+        formData.append("academic_year_id", academic_year_id);
+        formData.append("articleFile", wordFile as Blob);
+        const createContribution = await fetch(`${urlBackend}/contribution/createContribution/`, {
           method: "POST",
-          body: dataFormImage,
+          body: formData,
         });
+        if (createContribution.ok) {
+          const data = await createContribution.json(); // Assuming the response body contains JSON data
+          const contributionId = data.contribution_id;
+          const dataFormImage = new FormData();
+          dataFormImage.append("contribution_id", contributionId);
+          dataFormImage.append("imageFile", imageFile as Blob);
 
-        if (uploadImageResponse.ok) {
-          // Image upload successful
+          const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
+            method: "POST",
+            body: dataFormImage,
+          });
+          if (uploadImageResponse.ok) {
+            // Image upload successful
+          } else {
+            setErrorMessage("Please enter full information.");
+            return;
+          }
         } else {
-          setErrorMessage("Please enter full information.");
-          return;
+          // Handle error
         }
-      } else {
-        // Handle error
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Error fetching profile data:", error);
     }
-  };
+  }
+
   //End Upload
 
   return (
@@ -310,7 +333,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     </div>
                   </div>
                 </div>
-                <StudentContribution userId={userId} />
+
               </div>
             )}
             {index === 1 &&
@@ -332,8 +355,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                   <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
                     <div className="mb-0 rounded-t bg_nude px-6 py-6">
-                      <div className="flex justify-between text-center ">
-                        <h6 className="text-blueGray-700 text-xl font-bold">
+                      <div className="flex items-center text-center">
+                        <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
                           My Contribution
                         </h6>
                         <button
@@ -344,6 +367,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           type="button"
                         >
                           Sent File
+                        </button>
+                        <button
+                          onClick={() => resetForm()}
+                          className={`rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
+                          type="button"
+                        >
+                          Clean Form
                         </button>
                       </div>
                     </div>
@@ -407,6 +437,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                       <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
+                                      <input
+                                        type="file"
+                                        name="imageFiles"
+                                        id="imageFiles"
+                                        className="sr-only"
+                                        accept="image/png, image/jpeg" // Only PNG and JPEG images are allowed to be imported
+                                        onChange={handleImageFileChange}
+                                      />
                                     </div>
                                   </label>
                                 </div>
@@ -431,6 +469,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                       <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
+                                      <input
+                                        type="file"
+                                        name="wordFile"
+                                        id="wordFile"
+                                        className="sr-only"
+                                        accept=".docx, .doc" // Chỉ cho phép nhập file Word
+                                        onChange={handleWordFileChange}
+                                      />
                                     </div>
                                   </label>
                                 </div>
