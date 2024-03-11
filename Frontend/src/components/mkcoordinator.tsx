@@ -27,6 +27,11 @@ interface Magazine {
   p_last_name: string;
 }
 
+interface AcademicYear {
+  academic_year_id: string;
+  academic_year: string;
+}
+
 
 const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
@@ -42,9 +47,12 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingCommentRowIndex, setEditingCommentRowIndex] = useState<number | null>(null);
   const [editedStatus, setEditedStatus] = useState("");
+  const [editedYear, setEditedYear] = useState("");
+  const [editedYearManage, setEditedYearManage] = useState("");
   const [editedComment, setEditedComment] = useState("");
 
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
 
   const tabs = ["Home", "Manage Contribution", "Profile"];
@@ -58,10 +66,35 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   });
 
   useEffect(() => {
+    if ((editedYear === "default") || (editedYear === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(editedYear);
+    }
+    if ((editedYearManage === "default") || (editedYearManage === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
+    }
     fetchProfileData();
-    showAllMagazineBelongToFaculty();
-    showMagazineOfStudent();
+    getAcademicYear();
   }, []);
+
+  const handleChangeYear = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(year);
+    }
+  }
+
+  const handleChangeYearNonPublish = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(year);
+    }
+  }
 
   const displayMessage = (type: any, message: any) => {
     setNotification({ type, message });
@@ -96,6 +129,106 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const handleCancelCommentEdit = () => {
     setEditingCommentRowIndex(null);
     setEditedComment("");
+  };
+
+  const showAllMagazineByFacultyAndYear = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getPublishContributionsByFacultyNameAndByYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: facultyName,
+            year: year,
+          }),
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setPublishMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.log("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+
+  const showAllMagazineByFacultyAndYearNonPublish = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: facultyName,
+            year: year,
+          }),
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.log("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
   };
 
   const showAllMagazineBelongToFaculty = async () => {
@@ -189,6 +322,22 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
       console.error("Error fetching profile data:", error);
     }
   };
+  const getAcademicYear = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const academicYearData = await response.json();
+        setAcademicYears(academicYearData);
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  }
 
   const fetchProfileData = async () => {
     try {
@@ -409,6 +558,25 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYear}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYear(selectedValue);
+                        handleChangeYear(selectedValue);
+                      }}
+                    >
+                      <option value="default">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <article>
                     <section className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
                       {publishMagazines.map((publishMagazines) => (
@@ -474,6 +642,25 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                       {notification.message}
                     </div>
                   )}
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYearManage}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYearManage(selectedValue);
+                        handleChangeYearNonPublish(selectedValue);
+                      }}
+                    >
+                      <option value="default">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                     <thead className="bg-gray-50">
                       <tr>

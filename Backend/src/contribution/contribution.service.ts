@@ -5,12 +5,13 @@ import { Repository } from 'typeorm';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { User } from 'src/users/models/entities/user.entity';
 import { AcademicYear } from 'src/academic_year/models/entities/academic-year.entity';
-import { UpdateStatusDto } from './models/dto/update_status.dto';
-import { UpdateContributionUrlDto } from './models/dto/update_contribution_url.dto';
+import { UpdateStatusDto } from './models/dto/update-status.dto';
+import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.dto';
 import * as path from 'path';
 import * as fs from 'fs';
 import { join } from 'path';
-import { UpdateCommentDto } from './models/dto/update_comment.dto';
+import { UpdateCommentDto } from './models/dto/update-comment.dto';
+import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 
 @Injectable()
 export class ContributionService {
@@ -76,6 +77,41 @@ export class ContributionService {
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
   }
+
+  async getPublishContributionsByFacultyNameAndByYear(contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
+    const { faculty_name, year } = contributionYearFacDto;
+  
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .innerJoin('sc.academic_year_id', 'ay')
+      .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
+      .andWhere('ay.academic_year = :academicYear', { academicYear: year })
+      .andWhere('sc.status = :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getContributionsByFacultyNameAndByYear(contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
+    const { faculty_name, year } = contributionYearFacDto;
+  
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .innerJoin('sc.academic_year_id', 'ay')
+      .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
+      .andWhere('ay.academic_year = :academicYear', { academicYear: year })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+  
+
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
