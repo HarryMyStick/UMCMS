@@ -9,7 +9,6 @@ import { RoleModule } from './role/role.module';
 import { ProfileModule } from './profile/profile.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { ContributionModule } from './contribution/contribution.module';
-import { CommentModule } from './comment/comment.module';
 import { AcademicYearModule } from './academic_year/academic-year.module';
 
 @Module({
@@ -32,7 +31,6 @@ import { AcademicYearModule } from './academic_year/academic-year.module';
     ProfileModule,
     FacultyModule,
     ContributionModule,
-    CommentModule,
     AcademicYearModule,
     MulterModule.register({
       // Adjust these options as per your requirement

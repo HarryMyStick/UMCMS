@@ -40,7 +40,9 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editingCommentRowIndex, setEditingCommentRowIndex] = useState<number | null>(null);
   const [editedStatus, setEditedStatus] = useState("");
+  const [editedComment, setEditedComment] = useState("");
 
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
 
@@ -51,10 +53,11 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const handleEditStatus = (index: number) => {
     setEditingRowIndex(index);
   };
+
   const handleSaveStatus = async (index: number, contributionId: string, contributionStatus: string) => {
     if (contributionStatus !== "" && "default") {
       try {
-        const response = await fetch("http://localhost:3001/contribution/updateStatus", {
+        const response = await fetch(`${urlBackend}/contribution/updateStatus`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -81,6 +84,43 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const handleCancelEdit = () => {
     setEditingRowIndex(null); // Reset editing state
     setEditedStatus("");
+  };
+
+  const handleEditComment = (index: number, content: string) => {
+    setEditingCommentRowIndex(index);
+    setEditedComment(content);
+  };
+
+  const handleCancelCommentEdit = () => {
+    setEditingCommentRowIndex(null);
+    setEditedComment("");
+  };
+
+  const handleSaveComment = async (index: number, contributionId: string, comment: string) => {
+    if (comment !== "") {
+      try {
+        const response = await fetch(`${urlBackend}/contribution/updateComment`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contribution_id: contributionId,
+            comment: comment,
+          }),
+        });
+        if (response.ok) {
+          showAllMagazineBelongToFaculty();
+          showMagazineOfStudent();
+          setEditingCommentRowIndex(null);
+          setEditedComment("");
+        } else {
+          console.error("There are some error occur.");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
   };
 
   const handleLogout = () => {
@@ -417,41 +457,37 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                     </h1>
                   </div>
                 </div>
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" style={{ maxWidth: "75%" }}>
-                  <table className="min-w-full divide-y divide-gray-200">
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
+                  <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Author</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Comment</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Image</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Author</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Comment</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {magazines.map((magazine, index) => (
-                        <tr key={magazine.sc_contribution_id} className="bg-white">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{index + 1}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                        <tr key={magazine.sc_contribution_id} className="bg-white text-center">
+                          <td className="px-6 py-4 whitespace-nowrap border-b border-gray-300">
                             <div className="flex-shrink-0 h-20 w-20">
                               <img className="h-20 w-20 rounded-full" src={magazine.sc_image_url} alt={magazine.sc_article_title} />
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
                             <div className="text-sm font-medium text-gray-900">{magazine.sc_article_title}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
                             <div className="text-sm font-medium text-gray-900">{magazine.p_first_name} {magazine.p_last_name}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
                             <div className="text-sm text-gray-900">{magazine.sc_article_description}</div>
                           </td>
-                          <td className="px-2 py-2 whitespace-nowrap relative w-1/6">
+                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                             {editingRowIndex === index ? (
                               <div className="flex items-center">
                                 <select
@@ -482,7 +518,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-center">
+                              <div className="flex items-center justify-center">
                                 <div className="text-sm text-gray-900">{magazine.sc_status}</div>
                                 <button
                                   className="absolute top-0 right-0 text-green-600 hover:text-green-900 p-1"
@@ -506,18 +542,44 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                               </div>
                             )}
                           </td>
-                          <td className="px-2 py-2 whitespace-wrap relative">
-                            <div className="w-full">{magazine.sc_comment}</div>
-                            <button
-                              className="absolute top-0 right-0 text-green-600 hover:text-green-900"
-                            // onClick={() => handleEditComment(index)}
-                            >
-                              <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
-                              </svg>
-                            </button>
+                          <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
+                            {editingCommentRowIndex === index ? (
+                              <div className="flex items-center">
+                                <textarea
+                                  className="text-sm text-gray-900 h-20 w-full resize-none"
+                                  value={editedComment}
+                                  onChange={(e) => setEditedComment(e.target.value)}
+                                />
+                                <div>
+                                  <button
+                                    className="text-green-600 hover:text-green-900 p-1 mr-1"
+                                    onClick={() => handleSaveComment(index, magazine.sc_contribution_id, editedComment)}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    className="text-red-600 hover:text-red-900 p-1"
+                                    onClick={() => handleCancelCommentEdit()}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center text-left">
+                                <div className="w-full">{magazine.sc_comment}</div>
+                                <button
+                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900"
+                                  onClick={() => handleEditComment(index, magazine.sc_comment)}
+                                >
+                                  <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium border-b border-gray-300">
                             <button
                               className="text-green-600 hover:text-green-900"
                               onClick={() => handleFileDownload(magazine.sc_article_content_url)}
