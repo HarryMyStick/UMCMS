@@ -8,6 +8,7 @@ import { ProfileService } from 'src/profile/profile.service';
 import { FacultyService } from 'src/faculty/faculty.service';
 import { RoleService } from 'src/role/role.service';
 import { Faculty } from 'src/faculty/models/entities/faculty.entity';
+import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -85,5 +86,46 @@ export class UsersService {
       throw new NotFoundException('Faculty not found');
     }
     return faculty;
+  }
+
+  async getAllUsersWithRoles(): Promise<User[]> {
+    return this.usersRepository.find({ relations: ['role'] });
+  }
+
+  async updateUserRole(updateRoleUserDto: UpdateRoleUserDto): Promise<User> {
+    const { user_id, role_name } = updateRoleUserDto;
+    const user = await this.usersRepository.findOne({
+      where: { user_id: user_id },
+      relations: ['role'], 
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Find the role by roleName
+    const role = await this.roleRepository.findOne({ where: { role_name: role_name } });
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    // Assign the found role's role_id to the user
+    user.role = role;
+
+    // Save the updated user entity
+    await this.usersRepository.save(user);
+
+    return user;
+  }
+
+  async deleteUser(user_id: string): Promise<void> {
+    const user = await this.usersRepository.findOne({
+      where: [{ user_id: user_id }],
+    });
+    if (!user) {
+      throw new NotFoundException('Contribution not found');
+    }
+    await this.usersRepository.remove(user);
   }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
-import { format, parseISO } from "date-fns";
+import Chart from 'chart.js/auto';
 
 interface NavProps {
   userId: string;
@@ -23,6 +23,16 @@ interface AcademicYear {
   final_closure_date: Date;
 }
 
+interface User {
+  user_id: string;
+  username: string;
+  role: Role;
+}
+
+interface Role {
+  role_id: string;
+  role_name: string;
+}
 
 const Administrator: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
@@ -35,11 +45,16 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [academicYears, setAcademicYears] = useState<AcademicYear>();
+  const [academicYearsAR, setAcademicYearsAR] = useState<AcademicYear[]>([]);
+  const [editedYear, setEditedYear] = useState("");
 
   const [editMode, setEditMode] = useState(false);
   const [closureDate, setClosureDate] = useState(new Date());
   const [finalClosureDate, setFinalClosureDate] = useState(new Date());
 
+  const [userList, setUserList] = useState<User[]>([]);
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
 
   const tabs = ["Manage Closure Date", "Manage Accounts", "Statistical Analysis", "Profile"];
   const [activeTab, setActiveTab] = useState(() => {
@@ -57,6 +72,14 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   useEffect(() => {
     fetchProfileData();
     getAcademicYear();
+    getAllUser();
+    getAllRole();
+    if (editedYear) {
+      fetchDataChart(editedYear);
+    } else {
+      fetchDataChart('2024');
+    }
+    getAllAcademicYear();
   }, []);
 
   useEffect(() => {
@@ -66,6 +89,11 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const displayMessage = (type: any, message: any) => {
     setNotification({ type, message });
   };
+
+  const handleYearChange = (selectedYear: string) => {
+    setEditedYear(selectedYear);
+    fetchDataChart(selectedYear);
+  }
 
   const handleEditModeToggle = () => {
     setEditMode((prevEditMode) => !prevEditMode);
@@ -82,6 +110,56 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = () => {
     setIsEditing(true);
   };
+
+  const handleEditRole = (index: number) => {
+    setEditingRowIndex(index);
+  };
+
+  const handleStopEditRole = (user_id: string, roleName: string) => {
+    setEditingRowIndex(null);
+    updateAccountRole(user_id, roleName);
+  };
+
+  const handleRoleChange = (roleName: string, index: number) => {
+    setUserList(prevUserList => {
+      const updatedUserList = [...prevUserList];
+      const userToUpdate = updatedUserList[index];
+      if (userToUpdate) {
+        updatedUserList[index] = {
+          ...userToUpdate,
+          role: {
+            ...userToUpdate.role,
+            role_name: roleName,
+          },
+        };
+      }
+      return updatedUserList;
+    });
+  };
+
+  const handleDeleteAccount = async (user: User) => {
+    // Display an alert to confirm deletion
+    if (window.confirm(`Are you sure you want to delete the account for ${user.username}?`)) {
+      try {
+        const response = await fetch(`${urlBackend}/users/deleteUser/${user.user_id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          setEditingRowIndex(null);
+          getAllUser();
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+      console.log(`Deleting account for ${user.username}...`);
+    } else {
+      // If user cancels, do nothing
+      console.log("Deletion cancelled.");
+    }
+  }
 
   const adjustTimezone = (dateString: Date) => {
     const date = new Date(dateString);
@@ -110,6 +188,213 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  const updateAccountRole = async (user_id: string, role_name: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/updateUserRole`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user_id,
+          role_name: role_name
+        })
+      });
+      if (response.ok) {
+        setEditingRowIndex(null);
+        console.log(user_id);
+        console.log(role_name);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }
+
+  const fetchDataChart = async (year: string) => {
+    try {
+      // Fetch contribution statistics
+      const contributionResponse = await fetch(`${urlBackend}/contribution/statisticContributionPerYear/${year}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!contributionResponse.ok) {
+        throw new Error('Failed to fetch contribution statistics');
+      }
+      const contributionData = await contributionResponse.json();
+
+      // Fetch contributor statistics
+      const contributorResponse = await fetch(`${urlBackend}/contribution/statisticContributorsPerYear/${year}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!contributorResponse.ok) {
+        throw new Error('Failed to fetch contributor statistics');
+      }
+      const contributorData = await contributorResponse.json();
+
+      // Render Count Contribution Chart
+
+      const countsContribution = contributionData.map((item: { contributionCount: any; }) => item.contributionCount);
+      const labelsContribution = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+
+      const canvasContribution = document.getElementById("myChartCounts") as HTMLCanvasElement;
+      // canvasContribution.width = 800;
+      // canvasContribution.height = 400;
+      if (canvasContribution) {
+        Chart.getChart(canvasContribution)?.destroy();
+        new Chart(canvasContribution, {
+          type: 'bar',
+          data: {
+            labels: labelsContribution,
+            datasets: [{
+              label: 'Contribution Count',
+              data: countsContribution,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                // Add more colors as needed
+              ],
+              borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                // Add more colors as needed
+              ],
+              borderWidth: 1,
+            }]
+          },
+          options: {
+            scales: {
+              y: {
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false // Hide the legend
+              }
+            }
+          }
+        });
+      }
+
+      // Render Count Contribution Percentage Chart
+
+      const countsContributionPercentage = contributionData.map((item: { contributionCount: any; }) => item.contributionCount);
+      const labelsContributionPercentage = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+
+      const canvasContributionPercentage = document.getElementById("myChartPercentages") as HTMLCanvasElement;
+      if (canvasContributionPercentage) {
+        Chart.getChart(canvasContributionPercentage)?.destroy();
+        new Chart(canvasContributionPercentage, {
+          type: 'doughnut',
+          data: {
+            labels: labelsContributionPercentage,
+            datasets: [{
+              label: 'Contribution Percentage',
+              data: countsContributionPercentage,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                // Add more colors as needed
+              ],
+              hoverOffset: 4
+            }]
+          }
+        });
+      }
+
+      // Render Contributor Chart
+
+      const countsContributor = contributorData.map((item: { contributorCount: any; }) => item.contributorCount);
+      const labelsContributor = contributorData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+
+      const canvasContributor = document.getElementById("myChartContributors") as HTMLCanvasElement;
+      if (canvasContributor) {
+        Chart.getChart(canvasContributor)?.destroy();
+        new Chart(canvasContributor, {
+          type: 'doughnut',
+          data: {
+            labels: labelsContributor,
+            datasets: [{
+              label: 'Contributior',
+              data: countsContributor,
+              backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                // Add more colors as needed
+              ],
+              hoverOffset: 4
+            }]
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getAllUser = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getAllUserWithRole`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserList(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }
+
+  const getAllRole = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/role/getRoles`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }
+
+  const getAllAcademicYear = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAcademicYearsAR(data);
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  }
+
   const getAcademicYear = async () => {
     try {
       const currentYear = new Date().getFullYear();
@@ -124,7 +409,6 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
         setClosureDate(adjustTimezone(new Date(data.closure_date)));
         setFinalClosureDate(adjustTimezone(new Date(data.final_closure_date)));
         setAcademicYears(data);
-        console.log(closureDate);
       }
     } catch (error) {
       console.error("Error fetching profile data:", error);
@@ -292,6 +576,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
           >
             {index === 0 && (
               <div className="max-w-screen-xl mx-auto px-4">
+                <h1 className="text-3xl font-semibold mb-4">Manage Closure Date</h1>
                 {notification && (
                   <div
                     className={`p-3 text-sm rounded-md ${notification.type === "error"
@@ -314,7 +599,14 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                     >
                       Save Changes
                     </button>
-                  ) : null}
+                  ) :
+                    <button
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+                      onClick={handleEditModeToggle}
+                    >
+                      Edit Date
+                    </button>
+                  }
                 </div>
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="bg-white rounded-lg p-6 shadow-md">
@@ -340,25 +632,6 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                             {closureDate.toDateString()} {closureDate.toLocaleTimeString()}
                           </p>
                         </div>
-                        <button
-                          className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                          onClick={handleEditModeToggle}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 15l7-7 7 7"
-                            />
-                          </svg>
-                        </button>
                       </div>
                     )}
                   </div>
@@ -380,27 +653,165 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                             {finalClosureDate.toDateString()} {finalClosureDate.toLocaleTimeString()}
                           </p>
                         </div>
-                        <button
-                          className="p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                          onClick={handleEditModeToggle}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-6 w-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 15l7-7 7 7"
-                            />
-                          </svg>
-                        </button>
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {index === 1 && (
+              <div className="max-w-screen-xl mx-auto px-4">
+                <h1 className="text-3xl font-semibold mb-4">Manage User Accounts</h1>
+                <button
+                  onClick={getAllUser}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                  Refresh
+                </button>
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full border-collapse border border-gray-200">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-2">Username</th>
+                        <th className="px-4 py-2">Role</th>
+                        <th className="px-4 py-2">Actions</th> {/* New column for actions */}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userList.map((user, index) => (
+                        <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-4 py-2">{user.username}</td>
+                          <td className="px-4 py-2">
+                            {editingRowIndex === index ? (
+                              <select
+                                value={user.role.role_name}
+                                onChange={(e) => handleRoleChange(e.target.value, index)}
+                                className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                              >
+                                {roles.map((role) => (
+                                  <option key={role.role_id} value={role.role_name}>{role.role_name}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              user.role.role_name
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            {editingRowIndex === index ? (
+                              <button
+                                onClick={() => handleStopEditRole(user.user_id, user.role.role_name)}
+                                className="mr-2 text-red-600 hover:text-red-900 focus:outline-none"
+                              >
+                                <svg
+                                  className="w-5 h-5 mt-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleEditRole(index)}
+                                className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
+                              >
+                                <svg
+                                  className="w-5 h-5 mt-2"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteAccount(user)}
+                              className="text-red-600 hover:text-red-900 focus:outline-none"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            )}
+            {index === 2 && (
+              <div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYear}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYear(selectedValue);
+                        handleYearChange(selectedValue);
+                      }}
+                    >
+                      <option value="2024">All Year</option>
+                      {academicYearsAR.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="container mx-auto px-4 py-8">
+                    <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                    <div className="grid grid-cols-1 gap-8">
+                      <div className="chart-container">
+                        <div className="flex justify-center">
+                          <div className="w-[800px] max-w-xl mx-auto">
+                            <canvas id="myChartCounts"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                      <div className="chart-container">
+                        <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                        <div className="max-w-sm mx-auto">
+                          <canvas id="myChartPercentages"></canvas>
+                        </div>
+                      </div>
+                      <div className="chart-container">
+                        <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                        <div className="max-w-sm mx-auto">
+                          <canvas id="myChartContributors"></canvas>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

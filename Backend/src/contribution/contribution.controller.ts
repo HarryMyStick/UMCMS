@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Patch, Delete, Res } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFile, Get, Param, Delete, Res } from '@nestjs/common';
 import { ContributionService } from './contribution.service';
 import { CreateContributionDto } from './models/dto/create-contribution.dto';
 import { Contribution } from './models/entities/contribution.entity';
@@ -131,6 +131,16 @@ export class ContributionController {
   @Post('getPublishContributionsByYear')
   async getPublishContributionsByYear(@Body('year') year: string): Promise<Contribution[]> {
     return this.contributionService.getPublishContributionsByYear(year);
+  }
+
+  @Get('statisticContributionPerYear/:year')
+  async statisticContributionPerYear(@Param('year') year: string): Promise<any[]> {
+    return this.contributionService.statisticContributionPerYear(year);
+  }
+
+  @Get('statisticContributorsPerYear/:year')
+  async statisticContributorsPerYear(@Param('year') year: string): Promise<any[]> {
+    return this.contributionService.statisticContributorsPerYear(year);
   }
 
 }
