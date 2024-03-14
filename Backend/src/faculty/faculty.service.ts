@@ -45,4 +45,8 @@ export class FacultyService {
     }
     return faculty;
   }
+
+  async getAllFaculty(): Promise<Faculty[]> {
+    return this.facultyRepository.find();
+  }
 }
