@@ -81,7 +81,7 @@ export class ContributionService {
 
   async getPublishContributionsByFacultyNameAndByYear(contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
     const { faculty_name, year } = contributionYearFacDto;
-  
+
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
@@ -98,7 +98,7 @@ export class ContributionService {
 
   async getContributionsByFacultyNameAndByYear(contributionYearFacDto: ContributionYearFacDto): Promise<Contribution[]> {
     const { faculty_name, year } = contributionYearFacDto;
-  
+
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
@@ -111,7 +111,7 @@ export class ContributionService {
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
   }
-  
+
 
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
@@ -142,15 +142,15 @@ export class ContributionService {
     if (!contribution) {
       throw new Error(`Contribution with id ${updateContributionDto.contribution_id} not found`);
     }
-  
+
     contribution.article_title = updateContributionDto.article_title;
     contribution.article_description = updateContributionDto.article_description;
-    if(contribution.article_content_url !== "not update"){
+    if (contribution.article_content_url !== "not update") {
       contribution.article_content_url = updateContributionDto.article_content_url;
     }
     contribution.submission_date = updateContributionDto.submission_date;
     contribution.edit_date = updateContributionDto.edit_date;
-    
+
     if (updateContributionDto.user_id) {
       const user = await this.userRepository.findOne({
         where: { user_id: updateContributionDto.user_id },
@@ -160,7 +160,7 @@ export class ContributionService {
       }
       contribution.user_id = user;
     }
-  
+
     if (updateContributionDto.academic_year_id) {
       // Assuming academic_year_id is a string representing the academic year's ID
       const academicYear = await this.academicYearRepository.findOne({
@@ -171,13 +171,13 @@ export class ContributionService {
       }
       contribution.academic_year_id = academicYear;
     }
-  
+
     // Save the updated contribution entity
     await this.contributionRepository.save(contribution);
-  
+
     return contribution;
   }
-  
+
   async deleteContribution(contributionId: string): Promise<void> {
     const contribution = await this.contributionRepository.findOne({
       where: [{ contribution_id: contributionId }],
@@ -190,19 +190,19 @@ export class ContributionService {
 
   async getImageData(imageName: string): Promise<string | null> {
     const imagePath = join(__dirname, '..', '..', '..', 'Backend', 'src', 'contribution', 'uploads', 'img', imageName);
-    
+
     return new Promise((resolve, reject) => {
       fs.readFile(imagePath, (err, data) => {
         if (err) {
           if (err.code === 'ENOENT') {
             resolve(null);
           } else {
-            reject(err); 
+            reject(err);
           }
         } else {
           const base64Image = Buffer.from(data).toString('base64');
           const imageUrl = `data:image/jpeg;base64,${base64Image}`;
-          resolve(imageUrl); 
+          resolve(imageUrl);
         }
       });
     });
@@ -218,13 +218,13 @@ export class ContributionService {
     const contribution = await this.contributionRepository.findOne({
       where: [{ contribution_id: updateStatusDto.contribution_id }],
     });
-    
+
     if (!contribution) {
       throw new NotFoundException('Contribution not found');
     }
     contribution.status = updateStatusDto.status;
     const updatedContribution = await contribution.save();
-    
+
     return updatedContribution;
   }
 
@@ -232,13 +232,13 @@ export class ContributionService {
     const contribution = await this.contributionRepository.findOne({
       where: [{ contribution_id: updateCommentDto.contribution_id }],
     });
-    
+
     if (!contribution) {
       throw new NotFoundException('Contribution not found');
     }
     contribution.comment = updateCommentDto.comment;
     const updatedContribution = await contribution.save();
-    
+
     return updatedContribution;
   }
 
@@ -266,6 +266,54 @@ export class ContributionService {
       .addSelect(['sc', 'sc.user_id'])
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
+  }
+
+  async statisticContributionPerYear(year: string): Promise<any[]> {
+    try {
+      const statistics = await this.contributionRepository
+        .createQueryBuilder('contribution')
+        .select('academic_year.academic_year', 'academicYear')
+        .addSelect('faculty.faculty_name', 'facultyName')
+        .addSelect('COUNT(contribution.contribution_id)', 'contributionCount')
+        .innerJoin('contribution.academic_year_id', 'academic_year')
+        .innerJoin('contribution.user_id', 'user')
+        .innerJoin('user.faculty_id', 'faculty')
+        .where('contribution.status = :status', { status: 'Published' })
+        .andWhere('academic_year.academic_year = :year', { year })
+        .groupBy('academic_year.academic_year')
+        .addGroupBy('faculty.faculty_name')
+        .orderBy('academic_year.academic_year')
+        .addOrderBy('faculty.faculty_name')
+        .getRawMany();
+
+      return statistics;
+    } catch (error) {
+      throw new Error(`Unable to fetch contribution statistics: ${error.message}`);
+    }
+  }
+
+  async statisticContributorsPerYear(year: string): Promise<any[]> {
+    try {
+      const statistics = await this.contributionRepository
+        .createQueryBuilder('contribution')
+        .select('academic_year.academic_year', 'academicYear')
+        .addSelect('faculty.faculty_name', 'facultyName')
+        .addSelect('COUNT(DISTINCT user.user_id)', 'contributorCount') // Count distinct users (contributors)
+        .innerJoin('contribution.academic_year_id', 'academic_year')
+        .innerJoin('contribution.user_id', 'user')
+        .innerJoin('user.faculty_id', 'faculty')
+        .where('contribution.status = :status', { status: 'Published' })
+        .andWhere('academic_year.academic_year = :year', { year })
+        .groupBy('academic_year.academic_year')
+        .addGroupBy('faculty.faculty_name')
+        .orderBy('academic_year.academic_year')
+        .addOrderBy('faculty.faculty_name')
+        .getRawMany();
+  
+      return statistics;
+    } catch (error) {
+      throw new Error(`Unable to fetch contributor statistics: ${error.message}`);
+    }
   }
 
 }

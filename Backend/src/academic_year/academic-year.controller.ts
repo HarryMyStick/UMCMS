@@ -29,4 +29,5 @@ export class AcademicYearController {
   updateAcadamicYear(@Body() UpdateAcademicYearDto: UpdateAcademicYearDto): Promise<AcademicYear> {
     return this.academicYearService.updateAcadamicYear(UpdateAcademicYearDto);
   }
+
 }
