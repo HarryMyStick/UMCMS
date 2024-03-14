@@ -11,6 +11,25 @@ export const Register: NextPage = () => {
   const password = useRef<HTMLInputElement>(null);
   const confirmPassword = useRef<HTMLInputElement>(null);
   const facultyName = useRef<HTMLSelectElement>(null);
+  const [faculties, setFaculties] = useState([]);
+
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      try {
+        const response = await fetch(`${urlBackend}/faculty/getAllFaculty`);
+        if (response.ok) {
+          const data = await response.json();
+          setFaculties(data);
+        } else {
+          throw new Error("Failed to fetch faculties");
+        }
+      } catch (error) {
+        console.error("Error fetching faculties:", error);
+      }
+    };
+
+    fetchFaculties();
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -120,12 +139,13 @@ export const Register: NextPage = () => {
               ref={facultyName}
               defaultValue="IT"
               className="mb-2 mb-3 mt-1 block w-full rounded-md border border-gray-500 px-2 px-2 py-1.5 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-              name="cars"
+              name="faculty"
             >
-              <option className="mb-2 mb-3 mt-1 block w-full rounded-md border" value="IT">Information Technology</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Design">Graphic Design</option>
-              <option value="Event">Event</option>
+              {faculties.map((faculty: any) => (
+                <option key={faculty.faculty_id} value={faculty.faculty_name}>
+                  {faculty.faculty_name}
+                </option>
+              ))}
             </select>
             {errorMessage && (
               <div className="bg-yellow-100 border border-yellow-300 rounded-md p-3 text-yellow-900 text-sm">

@@ -229,4 +229,30 @@ export class ContributionService {
     return updatedContribution;
   }
 
+  async getAllPublishedContributions(): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('sc.status = :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getPublishContributionsByYear(year: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .innerJoin('sc.academic_year_id', 'ay')
+      .where('ay.academic_year = :academicYear', { academicYear: year })
+      .andWhere('sc.status = :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
 }
