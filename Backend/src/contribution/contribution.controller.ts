@@ -11,17 +11,18 @@ import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.d
 import { Response } from 'express';
 import { UpdateCommentDto } from './models/dto/update-comment.dto';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
+import { UpdateContributionDto } from './models/dto/update-contribution.dto';
 
 @ApiTags('Contribution')
 @Controller('contribution')
 export class ContributionController {
   constructor(private readonly contributionService: ContributionService) { }
 
-  @Post('createContribution') 
-  @UseInterceptors(FileInterceptor('articleFile')) 
+  @Post('createContribution')
+  @UseInterceptors(FileInterceptor('articleFile'))
   async createContribution(
     @Body() createContributionDto: CreateContributionDto,
-    @UploadedFile() file: Express.Multer.File 
+    @UploadedFile() file: Express.Multer.File
   ): Promise<Contribution> {
     const uploadFolder = 'src/contribution/uploads';
     const filename = `${Date.now()}-${file.originalname}`;
@@ -34,20 +35,20 @@ export class ContributionController {
     return this.contributionService.createContribution(createContributionDto);
   }
 
-  @Post('uploadImage') 
-  @UseInterceptors(FileInterceptor('imageFile')) 
+  @Post('uploadImage')
+  @UseInterceptors(FileInterceptor('imageFile'))
   async uploadImage(
     @Body() updateContributionUrlDto: UpdateContributionUrlDto,
-    @UploadedFile() file: Express.Multer.File 
+    @UploadedFile() file: Express.Multer.File
   ): Promise<Contribution> {
     const uploadFolder = 'src/contribution/uploads/img';
     const filename = `${Date.now()}-${file.originalname}`;
     const filePath = path.join(uploadFolder, filename);
-  
+
     fs.writeFileSync(filePath, file.buffer);
-  
+
     updateContributionUrlDto.image_url = filename;
-  
+
     return this.contributionService.updateImageContribution(updateContributionUrlDto);
   }
 
@@ -77,20 +78,21 @@ export class ContributionController {
   }
 
   @Post('updateContribution')
-  @UseInterceptors(FileInterceptor('articleFile')) 
+  @UseInterceptors(FileInterceptor('articleFile'))
   async updateContribution(
-    @Body() createContributionDto: CreateContributionDto,
-    @UploadedFile() file: Express.Multer.File 
+    @Body() updateContributionDto: UpdateContributionDto,
+    @UploadedFile() file?: Express.Multer.File 
   ): Promise<Contribution> {
-    const uploadFolder = 'src/contribution/uploads';
-    const filename = `${Date.now()}-${file.originalname}`;
-    const filePath = path.join(uploadFolder, filename);
-
-    fs.writeFileSync(filePath, file.buffer);
-
-    createContributionDto.article_content_url = filePath;
-
-    return this.contributionService.updateContribution(createContributionDto);
+    if (file) {
+      const uploadFolder = 'src/contribution/uploads';
+      const filename = `${Date.now()}-${file.originalname}`;
+      const filePath = path.join(uploadFolder, filename);
+      fs.writeFileSync(filePath, file.buffer);
+      updateContributionDto.article_content_url = filePath;
+    }else{
+      updateContributionDto.article_content_url = "not update";
+    }
+    return this.contributionService.updateContribution(updateContributionDto);
   }
 
   @Delete('deleteContribution/:contributionId')
@@ -104,7 +106,7 @@ export class ContributionController {
   async serveImage(@Param('imageName') imageName: string): Promise<string | null> {
     return this.contributionService.getImageData(imageName);
   }
-  
+
   @Get('getFile/:filename')
   getFile(@Param('filename') filename: string, @Res() res: Response): void {
     const filePath = this.contributionService.getFilePath(filename);
@@ -120,7 +122,7 @@ export class ContributionController {
   updateComment(@Body() updateCommentDto: UpdateCommentDto): Promise<Contribution> {
     return this.contributionService.updateContributionComment(updateCommentDto);
   }
-  
+
   @Post('getAllContributionPublished')
   async getAllContributionPublished(): Promise<Contribution[]> {
     return this.contributionService.getAllPublishedContributions();
@@ -130,5 +132,5 @@ export class ContributionController {
   async getPublishContributionsByYear(@Body('year') year: string): Promise<Contribution[]> {
     return this.contributionService.getPublishContributionsByYear(year);
   }
-  
+
 }
