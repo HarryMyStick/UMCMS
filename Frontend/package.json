@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.2.1",
+    "date-fns": "^3.4.0",
     "dayjs": "^1.11.7",
     "exceljs": "^4.4.0",
     "jszip": "^3.10.1",
     "next": "^13.4.1",
     "react": "18.2.0",
+    "react-datetime-picker": "^5.6.0",
     "react-dom": "18.2.0",
     "react-responsive-carousel": "^3.2.23",
     "zod": "^3.21.4",

@@ -56,7 +56,10 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
 
 
   const tabs = ["Home", "Manage Contribution", "Profile"];
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => {
+    const storedTabIndex = sessionStorage.getItem("activeTabIndex");
+    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+  });
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -79,6 +82,10 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     fetchProfileData();
     getAcademicYear();
   }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("activeTabIndex", activeTab.toString());
+  }, [activeTab]);
 
   const handleChangeYear = (year: string) => {
     if ((year === "default") || (year === "")) {
@@ -805,7 +812,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
                     <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
-                      Profile information
+                      Profile information &gt;
                     </p>
                     <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
                       Your profile information<span className="bg-darkBlue"></span>
