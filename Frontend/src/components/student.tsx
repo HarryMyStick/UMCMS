@@ -59,10 +59,31 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [editedYearManage, setEditedYearManage] = useState("");
+  const [editingContribution, setEditingContribution] = useState<any>(null);
+
+  const [imageFileUrl, setImageFileUrl] = useState<string>('');
+  const [wordFileUrl, setWordFileUrl] = useState<string>('');
+  const [wordFile, setWordFile] = useState<File | null | undefined>(null);
+  const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
+
+  const title = useRef<HTMLInputElement>(null);
+  const description = useRef<HTMLInputElement>(null);
+
+  const titleUpdate = useRef<HTMLInputElement>(null);
+  const descriptionUpdate = useRef<HTMLInputElement>(null);
+  const handleEdit = (contribution: any) => {
+    setEditingContribution({
+      title: contribution.sc_article_title,
+      description: contribution.sc_article_description,
+      urlImage: contribution.sc_image_url,
+      urlWord: contribution.sc_article_content_url,
+    });
+  };
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAgree(e.target.checked);
   };
+
   const displayMessage = (type: any, message: any) => {
     setNotification({ type, message });
   };
@@ -95,6 +116,82 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       displayMessage("success", "Saved successfully!")
     }
   };
+  const handleUpdateFile = async () => {
+    try {
+      await updateContribution(); // Gửi dữ liệu
+      setAgree(false); // Đặt lại trạng thái của checkbox
+      // setFormSent(true); // Đặt trạng thái của form thành đã gửi
+    } catch (error) {
+      displayMessage("success", "Error updating contribution!")
+    }
+  };
+
+  const updateContribution = async () => {
+    try {
+      const fieldTitle = titleUpdate.current?.value?.trim() || '';
+      const fieldDescription = descriptionUpdate.current?.value?.trim() || '';
+      if (fieldTitle === "" || fieldDescription === "") {
+        displayMessage("error", "Please enter full information.");
+        return;
+      }
+      const currentYear = new Date().getFullYear();
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (getAcademicYearId.ok) {
+        const data = await getAcademicYearId.json();
+        const academic_year_id = data.academic_year_id;
+        const formData = new FormData();
+        const currentDate: string = formatDate(new Date());
+        formData.append("user_id", userId);
+        formData.append("article_title", fieldTitle);
+        formData.append("article_description", fieldDescription);
+        formData.append("article_submitted", currentDate);
+        formData.append("edit_date", currentDate);
+        formData.append("status", "Pending");
+        formData.append("academic_year_id", academic_year_id);
+
+        if (wordFile) {
+          formData.append("articleFile", wordFile as Blob);
+        }         
+        if (imageFile) {
+          const dataFormImage = new FormData();
+
+          dataFormImage.append("imageFile", imageFile as Blob);
+
+          const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
+            method: "POST",
+            body: dataFormImage,
+          });
+
+          if (!uploadImageResponse.ok) {
+            displayMessage("error", "Error uploading image.");
+            return;
+          }
+        }
+
+        const updateContribution = await fetch(`${urlBackend}/contribution/UpdateContribution`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (updateContribution.ok) {
+          const data = await updateContribution.json();
+          displayMessage("success", "Contribution successfully updated.");
+
+        } else {
+          displayMessage("error", "Error updating contribution.");
+        }
+      }
+    } catch (error) {
+      displayMessage("error", "Error updating contribution!.");
+    }
+  }
+
 
   const resetForm = async () => {
     // Đặt lại trạng thái của các trường trong form
@@ -106,11 +203,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   };
   // end method reset form submit contributions
 
-  const [wordFile, setWordFile] = useState<File | null | undefined>(null);
-  const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
-
-  const title = useRef<HTMLInputElement>(null);
-  const description = useRef<HTMLInputElement>(null);
 
   const handleLogout = () => {
     // Implement your logout functionality here
@@ -143,7 +235,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         const response = await fetch(`${urlBackend}/contribution/deleteContribution/${contributionId}`, {
           method: 'DELETE',
         });
-  
+
         if (response.ok) {
           // Xóa mục khỏi danh sách magazines nếu xóa thành công
           setMagazines(magazines.filter(magazine => magazine.sc_contribution_id !== contributionId));
@@ -151,7 +243,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         } else {
           setNotification({ type: 'error', message: 'Failed to delete contribution' });
         }
-      }     
+      }
     } catch (error) {
       console.error('Error deleting contribution:', error);
       setNotification({ type: 'error', message: 'An error occurred while deleting contribution' });
@@ -170,31 +262,31 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setAcademicYears(academicYearData);
       }
     } catch (error) {
-      console.error("Error fetching profile data:", error);
+      displayMessage("error", "Error fetching profile data");
     }
   }
   // End delete contribution
 
   async function handleFileDownload(filename: string) {
     try {
-        const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        if (response.ok) {
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          console.error("Error downloading file:", response.statusText);
-        }
+      const response = await fetch(`${urlBackend}/contribution/getFile/${filename}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        console.error("Error downloading file:", response.statusText);
+      }
     } catch (error) {
       console.error("Fetch error:", error);
     }
@@ -492,7 +584,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setImageFiles(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        setErrorMessage('Please select a PNG or JPEG image file.');
+        displayMessage("error","Please select a PNG or JPEG image file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
@@ -506,11 +598,20 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setWordFile(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        setErrorMessage('Please select a Word document file.');
+        displayMessage("error","Please select a Word document file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
   };
+  function formatDate(date: Date): string {
+    const year = date.getFullYear().toString().padStart(4, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
+  }
 
   const fetchUploadData = async () => {
     try {
@@ -519,7 +620,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (fieldTitle === "" || fieldDescription === "") {
         setErrorMessage("Please enter full information.");
       }
-      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/2024`, {
+      const currentYear = new Date().getFullYear();
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -529,12 +631,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         const data = await getAcademicYearId.json();
         const academic_year_id = data.academic_year_id;
         const formData = new FormData();
+        const currentDate: string = formatDate(new Date());
         formData.append("user_id", userId);
         formData.append("article_title", fieldTitle);
         formData.append("article_description", fieldDescription);
-        formData.append("submission_date", "2024-03-09T12:00:00Z");
-        formData.append("edit_date", "2024-03-09T12:00:00Z");
-        formData.append("status", "Published");
+        formData.append("submission_date", currentDate);
+        formData.append("edit_date", currentDate);
+        formData.append("status", "Pending");
         formData.append("academic_year_id", academic_year_id);
         formData.append("articleFile", wordFile as Blob);
         const createContribution = await fetch(`${urlBackend}/contribution/createContribution/`, {
@@ -896,84 +999,281 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     </h1>
                   </div>
                 </div>
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
-                  {notification && (
-                    <div
-                      className={`p-3 text-sm rounded-md ${notification.type === "error"
-                        ? "bg-red-100 border border-red-300 text-red-900"
-                        : notification.type === "warning"
-                          ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
-                          : notification.type === "success"
-                            ? "bg-green-100 border border-green-300 text-green-900"
-                            : ""
-                        }`}
-                    >
-                      {notification.message}
-                    </div>
-                  )}
-                  <div className="flex justify-end mb-4">
-                    <select
-                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                      defaultValue={"default"}
-                      value={editedYearManage}
-                      onChange={(e) => {
-                        const selectedValue = e.target.value;
-                        setEditedYearManage(selectedValue);
-                        handleChangeYearNonPublish(selectedValue);
-                      }}
-                    >
-                      <option value="default">All Year</option>
-                      {academicYears.map((year) => (
-                        <option key={year.academic_year_id} value={year.academic_year}>
-                          {year.academic_year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Image</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Author</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {magazines.map((magazine, index) => (
-                        <tr key={magazine.sc_contribution_id} className="bg-white text-center">
-                          <td className="px-6 py-4 whitespace-nowrap border-b border-gray-300">
-                            <div className="flex-shrink-0 h-20 w-20">
-                              <img className="h-20 w-20 rounded-full" src={magazine.sc_image_url} alt={magazine.sc_article_title} />
+                {
+                  editingContribution ? (
+                    <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
+                      <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
+                        <div className="mb-0 rounded-t bg_nude px-6 py-6">
+                          {notification && (
+                            <div
+                              className={`p-3 text-sm rounded-md ${notification.type === "error"
+                                ? "bg-red-100 border border-red-300 text-red-900"
+                                : notification.type === "warning"
+                                  ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                                  : notification.type === "success"
+                                    ? "bg-green-100 border border-green-300 text-green-900"
+                                    : ""
+                                }`}
+                            >
+                              {notification.message}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
-                            <div className="text-sm font-medium text-gray-900">{magazine.sc_article_title}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
-                            <div className="text-sm font-medium text-gray-900">{magazine.p_first_name} {magazine.p_last_name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
-                            <div className="text-sm text-gray-900">{magazine.sc_article_description}</div>
-                          </td>
-                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
-                            <div className="text-sm text-gray-900">{magazine.sc_status}</div>
-                          </td>
-                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
-                            <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-red-500 hover:text-red-700 focus:outline-none">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                              </svg>
+                          )}
+                          <div className="flex items-center text-center">
+                            <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
+                              Update Contribution
+                            </h6>
+                            <button
+                              onClick={() => handleUpdateFile()}
+                              disabled={!agree}
+                              className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
+                                }`}
+                              type="button"
+                            >
+                              Update Contribution
                             </button>
-                          </td>
+                          </div>
+                        </div>
+                        <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
+                          <form>
+                            <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                              <div className="flex flex-wrap">
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
 
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </section>
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      Title:
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
+                                      placeholder="Input Title"
+                                      value={editingContribution.title} // Đảm bảo rằng giá trị của title đã được đặt
+                                      onChange={(e) => setEditingContribution({ ...editingContribution, title: e.target.value })}
+                                      ref={titleUpdate}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="description">
+                                      Description
+                                    </label>
+                                    <input
+                                      type="email"
+                                      className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
+                                      placeholder="Input Description"
+                                      value={editingContribution.description}
+                                      onChange={(e) => setEditingContribution({ ...editingContribution, description: e.target.value })}
+                                      ref={descriptionUpdate}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      Upload Image File
+                                    </label>
+                                    <div className="mb-8">
+                                      <input type="file" multiple name="imageFiles" id="imageFiles" className="sr-only" onChange={handleImageFileChange} />
+                                      <label htmlFor="imageFiles" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                        <div>
+                                          <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                            Drop Image file here
+                                          </label>
+                                          <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                                            Or
+                                          </span>
+                                          <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                            Browse
+                                          </span>
+                                          <input
+                                            type="file"
+                                            name="imageFiles"
+                                            id="imageFiles"
+                                            className="sr-only"
+                                            accept="image/png, image/jpeg" // Only PNG and JPEG images are allowed to be imported
+                                            onChange={handleImageFileChange}
+                                          />
+                                        </div>
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      Upload Word File
+                                    </label>
+                                    <div className="mb-8">
+                                      <input type="file" name="wordFile" id="wordFile" className="sr-only" onChange={handleWordFileChange} />
+                                      <label htmlFor="wordFile" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                        <div>
+                                          <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                            Drop Word file here
+                                          </label>
+                                          <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                                            Or
+                                          </span>
+                                          <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                            Browse
+                                          </span>
+                                          <input
+                                            type="file"
+                                            name="wordFile"
+                                            id="wordFile"
+                                            className="sr-only"
+                                            accept=".docx, .doc" // Chỉ cho phép nhập file Word
+                                            onChange={handleWordFileChange}
+                                          />
+                                        </div>
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      Selected image file:
+                                    </label>
+                                    {imageFile ? (
+                                      <div>
+                                        <p>{imageFile.name}</p>
+                                        <img src={URL.createObjectURL(imageFile)} alt="Selected Image" />
+                                      </div>
+                                    ) : (
+                                      editingContribution.urlImage ? (
+                                        <div>
+                                          {editingContribution.urlImage && <img src={editingContribution.urlImage} />}
+                                        </div>
+                                      ) : (
+                                        <p>No image selected</p>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="w-full px-4 lg:w-6/12">
+                                  <div className="relative mb-3 w-full">
+                                    <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      Sellected word file:
+                                    </label>
+                                    {editingContribution.urlWord && !wordFile && <p>{editingContribution.urlWord}</p>}
+                                    {wordFile && <p>{wordFile.name}</p>}
+                                  </div>
+
+                                </div>
+                                <div className="relative mb-3 w-full">
+                                  <label className="inline-flex items-center mt-3">
+                                    <input
+                                      type="checkbox"
+                                      className="form-checkbox h-5 w-5 text-gray-600"
+                                      checked={agree}
+                                      onChange={handleAgreeChange}
+                                      disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                    />
+                                    <span className="ml-2 text-gray-700">You can only submit Word files and PNG images, and please ensure that you are the author of the submitted content.</span>
+                                  </label>
+                                </div>
+                              </div>
+                              <hr className="border-b-1 border-blueGray-300 mt-6" />
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
+                      {notification && (
+                        <div
+                          className={`p-3 text-sm rounded-md ${notification.type === "error"
+                            ? "bg-red-100 border border-red-300 text-red-900"
+                            : notification.type === "warning"
+                              ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                              : notification.type === "success"
+                                ? "bg-green-100 border border-green-300 text-green-900"
+                                : ""
+                            }`}
+                        >
+                          {notification.message}
+                        </div>
+                      )}
+                      <div className="flex justify-end mb-4">
+                        <select
+                          className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                          defaultValue={"default"}
+                          value={editedYearManage}
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            setEditedYearManage(selectedValue);
+                            handleChangeYearNonPublish(selectedValue);
+                          }}
+                        >
+                          <option value="default">All Year</option>
+                          {academicYears.map((year) => (
+                            <option key={year.academic_year_id} value={year.academic_year}>
+                              {year.academic_year}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Image</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {magazines.map((magazine, index) => (
+                            <tr key={magazine.sc_contribution_id} className="bg-white text-center">
+                              <td className="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                                <div className="flex-shrink-0 h-20 w-20">
+                                  <img className="h-20 w-20 rounded-full" src={magazine.sc_image_url} alt={magazine.sc_article_title} />
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                                <div className="text-sm font-medium text-gray-900">{magazine.sc_article_title}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                                <div className="text-sm text-gray-900">{magazine.sc_article_description}</div>
+                              </td>
+                              <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                                <div className="text-sm text-gray-900">{magazine.sc_status}</div>
+                              </td>
+                              <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                                <button
+                                  className="text-green-600 hover:text-green-900"
+                                  onClick={() => handleFileDownload(magazine.sc_article_content_url)}
+                                >
+                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.5 10l-5 5-5-5h3V4h4v6zm4.5 7H4v2h16v-2z" />
+                                  </svg>
+                                </button>
+                                <button
+                                  className="text-green-600 hover:text-green-900"
+                                  onClick={() => handleEdit(magazine)}
+                                >
+                                  <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
+                                  </svg>
+                                </button>
+                                <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-red-500 hover:text-red-700 focus:outline-none">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                  </svg>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </section>
+                  )}
               </div>
             }
             {/* Start View Profile */}
