@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { UpdateCommentDto } from './models/dto/update-comment.dto';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
+import { UpdateContributionDto } from './models/dto/update-contribution.dto';
 
 @Injectable()
 export class ContributionService {
@@ -132,38 +133,51 @@ export class ContributionService {
       .getMany();
   }
 
-  async updateContribution(createContributionDto: CreateContributionDto): Promise<Contribution> {
-    const { contribution_id, user_id, academic_year_id, ...contributionData } = createContributionDto;
+  async updateContribution(updateContributionDto: UpdateContributionDto): Promise<Contribution> {
     const contribution = await this.contributionRepository.findOne({
-      where: [{ contribution_id: contribution_id }],
+      where: { contribution_id: updateContributionDto.contribution_id },
+      relations: ['user_id', 'academic_year_id'],
     });
+
     if (!contribution) {
-      throw new Error(`Contribution with ID ${contribution_id} not found`);
+      throw new Error(`Contribution with id ${updateContributionDto.contribution_id} not found`);
     }
-    if (user_id) {
+  
+    contribution.article_title = updateContributionDto.article_title;
+    contribution.article_description = updateContributionDto.article_description;
+    if(contribution.article_content_url !== "not update"){
+      contribution.article_content_url = updateContributionDto.article_content_url;
+    }
+    contribution.submission_date = updateContributionDto.submission_date;
+    contribution.edit_date = updateContributionDto.edit_date;
+    
+    if (updateContributionDto.user_id) {
       const user = await this.userRepository.findOne({
-        where: [{ user_id: user_id }],
+        where: { user_id: updateContributionDto.user_id },
       });
       if (!user) {
-        throw new Error(`User with ID ${user_id} not found`);
+        throw new Error(`User with id ${updateContributionDto.user_id} not found`);
       }
       contribution.user_id = user;
     }
-    if (academic_year_id) {
+  
+    if (updateContributionDto.academic_year_id) {
+      // Assuming academic_year_id is a string representing the academic year's ID
       const academicYear = await this.academicYearRepository.findOne({
-        where: [{ academic_year_id: academic_year_id }],
+        where: { academic_year_id: updateContributionDto.academic_year_id },
       });
       if (!academicYear) {
-        throw new Error(`Academic year with ID ${academic_year_id} not found`);
+        throw new Error(`Academic year with id ${updateContributionDto.academic_year_id} not found`);
       }
       contribution.academic_year_id = academicYear;
     }
-    Object.assign(contribution, contributionData);
+  
+    // Save the updated contribution entity
     await this.contributionRepository.save(contribution);
-
+  
     return contribution;
   }
-
+  
   async deleteContribution(contributionId: string): Promise<void> {
     const contribution = await this.contributionRepository.findOne({
       where: [{ contribution_id: contributionId }],
@@ -182,7 +196,6 @@ export class ContributionService {
         if (err) {
           if (err.code === 'ENOENT') {
             resolve(null);
-            console.log("Image not found");
           } else {
             reject(err); 
           }

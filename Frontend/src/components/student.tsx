@@ -1,11 +1,8 @@
 // Nav.tsx
 
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
-import Header from "./header";
-
 
 interface NavProps {
   userId: string;
@@ -35,22 +32,18 @@ interface AcademicYear {
   academic_year: string;
 }
 
-
 const Student: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
   const firstName = useRef<HTMLInputElement>(null);
   const lastName = useRef<HTMLInputElement>(null);
   const email = useRef<HTMLInputElement>(null);
   const phoneNumber = useRef<HTMLInputElement>(null);
-  const [errorMessage, setErrorMessage] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
-  const formRef = useRef<HTMLFormElement | null>(null);
 
   const [titleValue, setTitleValue] = useState<string>('');
   const [descriptionValue, setDescriptionValue] = useState<string>('');
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
 
-  const [isEditing, setIsEditing] = useState(false);
   const [agree, setAgree] = useState(false);
   const [formSent, setFormSent] = useState(false);
   const [notification, setNotification] = useState({ type: "", message: "" });
@@ -60,9 +53,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [editedYearManage, setEditedYearManage] = useState("");
   const [editingContribution, setEditingContribution] = useState<any>(null);
-
-  const [imageFileUrl, setImageFileUrl] = useState<string>('');
-  const [wordFileUrl, setWordFileUrl] = useState<string>('');
   const [wordFile, setWordFile] = useState<File | null | undefined>(null);
   const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
 
@@ -71,8 +61,56 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const titleUpdate = useRef<HTMLInputElement>(null);
   const descriptionUpdate = useRef<HTMLInputElement>(null);
+
+  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
+  const [activeTab, setActiveTab] = useState(() => {
+    const storedTabIndex = sessionStorage.getItem("activeTabIndex");
+    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+  });
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      displayMessage("", "");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("activeTabIndex", activeTab.toString());
+  }, [activeTab]);
+
+  useEffect(() => {
+    if ((editedYear === "default") || (editedYear === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(editedYear);
+    }
+    if ((editedYearManage === "default") || (editedYearManage === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
+    }
+    fetchProfileData();
+    getAcademicYear();
+  }, []);
+
+  const handleLogout = () => {
+    // Implement your logout functionality here
+    // For example, clearing local storage or session
+    router.push("/login"); // Redirect to login page after logout
+  };
+
+  const handleChangeYear = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showAllMagazineBelongToFaculty();
+    } else {
+      showAllMagazineByFacultyAndYear(year);
+    }
+  }
+
   const handleEdit = (contribution: any) => {
     setEditingContribution({
+      contribution_id: contribution.sc_contribution_id,
       title: contribution.sc_article_title,
       description: contribution.sc_article_description,
       urlImage: contribution.sc_image_url,
@@ -90,22 +128,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = (index: number) => {
     setEditingRowIndex(index);
   };
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      displayMessage("", "");
-    }, 3000);
-    return () => clearTimeout(timeout);
-  });
-
-  const handleChangeYear = (year: string) => {
-    if ((year === "default") || (year === "")) {
-      showAllMagazineBelongToFaculty();
-    } else {
-      showAllMagazineByFacultyAndYear(year);
-    }
-  }
-
+  
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
@@ -116,9 +139,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       displayMessage("success", "Saved successfully!")
     }
   };
-  const handleUpdateFile = async () => {
+
+  const handleUpdateFile = async (contribution_id: string) => {
     try {
-      await updateContribution(); // Gửi dữ liệu
+      await updateContribution(contribution_id); // Gửi dữ liệu
       setAgree(false); // Đặt lại trạng thái của checkbox
       // setFormSent(true); // Đặt trạng thái của form thành đã gửi
     } catch (error) {
@@ -126,7 +150,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   };
 
-  const updateContribution = async () => {
+  const updateContribution = async (contributionId: string) => {
     try {
       const fieldTitle = titleUpdate.current?.value?.trim() || '';
       const fieldDescription = descriptionUpdate.current?.value?.trim() || '';
@@ -147,10 +171,11 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         const academic_year_id = data.academic_year_id;
         const formData = new FormData();
         const currentDate: string = formatDate(new Date());
+        formData.append("contribution_id", contributionId);
         formData.append("user_id", userId);
         formData.append("article_title", fieldTitle);
         formData.append("article_description", fieldDescription);
-        formData.append("article_submitted", currentDate);
+        formData.append("submission_date", currentDate);
         formData.append("edit_date", currentDate);
         formData.append("status", "Pending");
         formData.append("academic_year_id", academic_year_id);
@@ -161,6 +186,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         if (imageFile) {
           const dataFormImage = new FormData();
 
+          dataFormImage.append("contribution_id", contributionId);
           dataFormImage.append("imageFile", imageFile as Blob);
 
           const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
@@ -174,7 +200,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           }
         }
 
-        const updateContribution = await fetch(`${urlBackend}/contribution/UpdateContribution`, {
+        const updateContribution = await fetch(`${urlBackend}/contribution/updateContribution`, {
           method: "POST",
           body: formData,
         });
@@ -192,7 +218,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-
   const resetForm = async () => {
     // Đặt lại trạng thái của các trường trong form
     setWordFile(null);
@@ -201,33 +226,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     setDescriptionValue('');
     // Đặt lại trạng thái của các trường khác nếu cần thiết
   };
-  // end method reset form submit contributions
 
-
-  const handleLogout = () => {
-    // Implement your logout functionality here
-    // For example, clearing local storage or session
-    router.push("/login"); // Redirect to login page after logout
-  };
-  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
-  const [activeTab, setActiveTab] = useState(0);
-
-  // Start View Contibution
-  useEffect(() => {
-    if ((editedYear === "default") || (editedYear === "")) {
-      showAllMagazineBelongToFaculty();
-    } else {
-      showAllMagazineByFacultyAndYear(editedYear);
-    }
-    if ((editedYearManage === "default") || (editedYearManage === "")) {
-      showMagazineOfStudent();
-    } else {
-      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
-    }
-    fetchProfileData();
-    getAcademicYear();
-  }, []);
-  // Start delete contribution
   const handleDelete = async (contributionId: string) => {
     try {
       const confirmDelete = window.confirm("Are you sure you want to delete this contribution?");
@@ -299,6 +298,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       showAllMagazineByFacultyAndYearNonPublish(year);
     }
   }
+
   const showMagazineOfStudent = async () => {
     try {
       const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
@@ -344,6 +344,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       console.error("Error fetching profile data:", error);
     }
   };
+
   const showAllMagazineByFacultyAndYearNonPublish = async (year: string) => {
     try {
       const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
@@ -489,9 +490,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   };
 
-  //End View Contibution
-
-  //Start view profile
   const fetchProfileData = async () => {
     try {
       const response = await fetch(
@@ -523,9 +521,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   if (!profile) {
     return <div>Loading...</div>;
   }
-  //End view profile
-
-  //Start update profile
+  
   const handleSaveProfile = async () => {
     const fieldFirstName = firstName.current?.value.trim();
     const fieldLastName = lastName.current?.value.trim();
@@ -553,7 +549,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
       });
       if (response.ok) {
-        setIsEditing(false);
         setEditingRowIndex(null);
         fetchProfileData();
         displayMessage("success", "Save profile information successfully.");
@@ -618,7 +613,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
       if (fieldTitle === "" || fieldDescription === "") {
-        setErrorMessage("Please enter full information.");
+        setNotification({type: "error", message: "Please enter full information."});
       }
       const currentYear = new Date().getFullYear();
       const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
@@ -658,7 +653,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           if (uploadImageResponse.ok) {
             // Image upload successful
           } else {
-            setErrorMessage("Please enter full information.");
+            setNotification({type: "error", message: "Please enter full information."});
             return;
           }
         } else {
@@ -1023,7 +1018,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               Update Contribution
                             </h6>
                             <button
-                              onClick={() => handleUpdateFile()}
+                              onClick={() => handleUpdateFile(editingContribution.contribution_id)}
                               disabled={!agree}
                               className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
                                 }`}
