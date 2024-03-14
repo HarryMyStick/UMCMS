@@ -23,5 +23,10 @@ export class FacultyController {
   async getFacultyByName(@Param('faculty_name') faculty_name: string): Promise<Faculty> {
     return this.facultyService.getFacultyByName(faculty_name);
   }
+  
+  @Get('getAllFaculty')
+  async getAllFaculty(): Promise<Faculty[]> {
+    return this.facultyService.getAllFaculty();
+  }
 
 }
