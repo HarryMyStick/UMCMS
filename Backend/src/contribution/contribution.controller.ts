@@ -89,8 +89,6 @@ export class ContributionController {
       const filePath = path.join(uploadFolder, filename);
       fs.writeFileSync(filePath, file.buffer);
       updateContributionDto.article_content_url = filePath;
-    }else{
-      updateContributionDto.article_content_url = "not update";
     }
     return this.contributionService.updateContribution(updateContributionDto);
   }
