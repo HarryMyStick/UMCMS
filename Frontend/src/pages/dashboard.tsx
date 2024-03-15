@@ -42,7 +42,7 @@ export const Dashboard: NextPage = () => {
     case "Marketing Coordinator":
       dashboardContent = <Mkcoordinator userId={userId} />;
       break;
-    case "Admin":
+    case "Administrator":
       dashboardContent = <Administrator userId={userId} />;
       break;
     case "Marketing Manager":

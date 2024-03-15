@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AcademicYear } from './models/entities/academic-year.entity';
 import { Repository } from 'typeorm';
 import { CreateAcademicYearDto } from './models/dto/create-academic-year.dto';
+import { UpdateAcademicYearDto } from './models/dto/update-academic-year.dto';
 
 @Injectable()
 export class AcademicYearService {
@@ -38,5 +39,22 @@ export class AcademicYearService {
 
   async getAllAcademicYear(): Promise<AcademicYear[]> {
     return this.academicYearRepository.find();
+  }
+
+  async updateAcadamicYear(updateAcademicYearDto: UpdateAcademicYearDto): Promise<AcademicYear> {
+    const { closure_date, final_closure_date } = updateAcademicYearDto;
+
+    const academicYear = await this.academicYearRepository.findOne({
+      where: { academic_year_id: updateAcademicYearDto.academic_year_id },
+    });
+    if (!academicYear) {
+      throw new NotFoundException('Academic year not found');
+    }
+
+    academicYear.closure_date = closure_date;
+    academicYear.final_closure_date = final_closure_date;
+
+    await this.academicYearRepository.save(academicYear);
+    return academicYear;
   }
 }
