@@ -88,7 +88,7 @@ export class ContributionController {
       const filename = `${Date.now()}-${file.originalname}`;
       const filePath = path.join(uploadFolder, filename);
       fs.writeFileSync(filePath, file.buffer);
-      updateContributionDto.article_content_url = filePath;
+      updateContributionDto.article_content_url = filename;
     }
     return this.contributionService.updateContribution(updateContributionDto);
   }
