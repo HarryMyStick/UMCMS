@@ -293,6 +293,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const tonggleBack = async () => {
     setEditingContribution(null);
+    handleChangeYearNonPublish("");
+  
   }
 
   const handleChangeYearNonPublish = (year: string) => {
