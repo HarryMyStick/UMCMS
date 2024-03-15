@@ -40,10 +40,10 @@ export const Login: NextPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const userId = data.user_id; 
+        const userId = data.user_id;
         await router.push({
-            pathname: "/dashboard",
-            query: { user_id: userId, role_name: data.role.role_name},
+          pathname: "/dashboard",
+          query: { user_id: userId, role_name: data.role.role_name },
         });
       } else {
         setErrorMessage("Invalid username or password.");
@@ -74,7 +74,12 @@ export const Login: NextPage = () => {
               UMCMS<span className="font-mono">™</span>
             </h1>
           </div>
-          < div 
+          {errorMessage && (
+            <div className="bg-yellow-100 border border-yellow-300 rounded-md p-3 text-yellow-900 text-sm">
+              {errorMessage}
+            </div>
+          )}
+          < div
             className="flex flex-col justify-center"
           >
             <label className="text-sm font-medium">Username</label>
@@ -108,7 +113,7 @@ export const Login: NextPage = () => {
                 <span id="login_default_state">Create new account</span>
               </div>
             </a>
-            </div>
+          </div>
         </div>
       </section>
     </div>

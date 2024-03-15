@@ -291,6 +291,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
+  const tonggleBack = async () => {
+    setEditingContribution(null);
+  }
+
   const handleChangeYearNonPublish = (year: string) => {
     if ((year === "default") || (year === "")) {
       showMagazineOfStudent();
@@ -1017,6 +1021,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
                               Update Contribution
                             </h6>
+                            <button
+                              onClick={() => tonggleBack()}
+                              className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none
+                                }`}
+                              type="button"
+                            >
+                              Back To List
+                            </button>
                             <button
                               onClick={() => handleUpdateFile(editingContribution.contribution_id)}
                               disabled={!agree}

@@ -145,7 +145,7 @@ export class ContributionService {
 
     contribution.article_title = updateContributionDto.article_title;
     contribution.article_description = updateContributionDto.article_description;
-    if (contribution.article_content_url !== "not update") {
+    if (contribution.article_content_url !== "") {
       contribution.article_content_url = updateContributionDto.article_content_url;
     }
     contribution.submission_date = updateContributionDto.submission_date;
