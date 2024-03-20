@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { urlBackend } from "../global";
-import { format } from 'date-fns';
 
 interface CommentProps {
     isOpen: boolean;
     onClose: () => void;
     contribution_id: string;
+    role: string;
 }
 
 interface Comment {
@@ -13,6 +13,8 @@ interface Comment {
     comment_content: string;
     submission_date: Date;
     contribution_id: Contribution;
+    student_reply: string;
+    student_submission_date: Date;
 }
 
 interface Contribution {
@@ -29,11 +31,12 @@ interface Contribution {
 }
 
 
-const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id }) => {
+const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, role }) => {
     const [comments, setComments] = useState<Comment[]>([]);
     const [newComment, setNewComment] = useState<string>('');
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editedCommentContent, setEditedCommentContent] = useState<string>('');
+    const [editedStudentReply, setEditedStudentReply] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) {
@@ -68,6 +71,7 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id }) =
                 body: JSON.stringify({
                     comment_content: content,
                     contribution_id: contribution_id,
+                    student_submission_date: null,
                 })
             });
             if (response.ok) {
@@ -100,9 +104,19 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id }) =
         setEditedCommentContent(commentContent);
     };
 
+    const startEditStudentReply = (commentId: string, commentStudentReply: string) => {
+        setEditingCommentId(commentId);
+        setEditedStudentReply(commentStudentReply);
+    };
+
     const cancelEdit = () => {
         setEditingCommentId(null);
         setEditedCommentContent('');
+    };
+
+    const cancelEditStudentReply = () => {
+        setEditingCommentId(null);
+        setEditedStudentReply('');
     };
 
     const saveEdit = async (commentId: string) => {
@@ -129,6 +143,30 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id }) =
         }
     };
 
+    const saveEditStudentReply = async (commentId: string) => {
+        try {
+            const currentTime = new Date().toISOString();
+            const response = await fetch(`${urlBackend}/comment/studentReply`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    comment_id: commentId,
+                    student_reply: editedStudentReply,
+                    student_submission_date: currentTime,
+                })
+            });
+            if (response.ok) {
+                fetchComments();
+                setEditingCommentId(null);
+                setEditedStudentReply('');
+            }
+        } catch (error) {
+            console.error('Error updating comment:', error);
+        }
+    };
+
     return (
         <div className={`comment-popup fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${isOpen ? 'block' : 'hidden'}`}>
             <div className="popup-content bg-white rounded-lg shadow-md w-[1000px] h-3/4 overflow-auto p-6">
@@ -143,31 +181,71 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id }) =
                         <li key={comment.comment_id}>
                             <div className="flex space-x-2 items-center">
                                 <div className="flex-1">
-                                    <p className="comment-text">{comment.comment_content}</p>
-                                    <p className="text-gray-500 text-sm">{new Date(comment.submission_date).toLocaleString()}</p>
+                                    <p className="comment-text">Marketing Coordinator Comment: {comment.comment_content}</p>
+                                    <div className="pl-2">
+                                        <p className="text-gray-500 text-sm">Time: {new Date(comment.submission_date).toLocaleString()}</p>
+                                    </div>
+                                    <div className="pl-4">
+                                        {comment.student_reply ? (
+                                            <p>Student Reply: {comment.student_reply}</p>
+                                        ) : (
+                                            <p>Student Reply: none</p>
+                                        )}
+                                        {comment.student_submission_date ? (
+                                            <p className="text-gray-500 text-sm pl-5">{new Date(comment.student_submission_date).toLocaleString()}</p>
+                                        ) :
+                                            <p className="text-gray-500 text-sm pl-5">Time: none</p>
+                                        }
+                                    </div>
                                 </div>
                                 <div>
-                                    {editingCommentId === comment.comment_id ? (
-                                        <div className="flex space-x-2">
-                                            <input type="text" value={editedCommentContent} onChange={(e) => setEditedCommentContent(e.target.value)} className="border-gray-300 border p-1 flex-1" />
-                                            <button className="bg-green-500 text-white py-1 px-2 rounded-md" onClick={() => saveEdit(comment.comment_id)}>Save</button>
-                                            <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={() => deleteComment(comment.comment_id)}>Delete</button>
-                                            <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={cancelEdit}>Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <button className="text-blue-500 hover:text-blue-700" onClick={() => startEdit(comment.comment_id, comment.comment_content)}>Edit</button>
+                                    {role === 'Student' && (
+                                        <>
+                                            {editingCommentId === comment.comment_id ? (
+                                                <div className="flex flex-col space-y-2">
+                                                    <h3 className="mb-2">Enter reply you want to send!</h3>
+                                                    <div className="flex space-x-2">
+                                                        <input type="text" value={editedStudentReply} onChange={(e) => setEditedStudentReply(e.target.value)} className="border-gray-300 border p-1 flex-1" />
+                                                        <button className="bg-green-500 text-white py-1 px-2 rounded-md" onClick={() => saveEditStudentReply(comment.comment_id)}>Save</button>
+                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={cancelEditStudentReply}>Cancel</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button className="text-blue-500 hover:text-blue-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
+                                            )}
+                                        </>
+                                    )}
+                                    {role === 'Marketing Coordinator' && (
+                                        <>
+                                            {editingCommentId === comment.comment_id ? (
+                                                <div className="flex flex-col space-y-2">
+                                                    <h3>Enter comment you want to change!</h3>
+                                                    <div className="flex space-x-2">
+                                                        <input type="text" value={editedCommentContent} onChange={(e) => setEditedCommentContent(e.target.value)} className="border-gray-300 border p-1 flex-1" />
+                                                        <button className="bg-green-500 text-white py-1 px-2 rounded-md" onClick={() => saveEdit(comment.comment_id)}>Save</button>
+                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={() => deleteComment(comment.comment_id)}>Delete</button>
+                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={cancelEdit}>Cancel</button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button className="text-blue-500 hover:text-blue-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>
                         </li>
                     ))}
                 </ul>
-                <div className="mt-4 flex items-center">
-                    <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} className="border-gray-300 border p-2 flex-1" />
-                    <button onClick={() => createComment(newComment)} className="text-white hover:text-blue-700 ml-2 px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-200 border border-blue-500 transition-colors duration-300 ease-in-out">Create</button>
-                </div>
+                {role !== 'Student' && ( // Render the "Create" button only if the role is not "Student"
+                    <div className="mt-4 flex items-center">
+                        <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} className="border-gray-300 border p-2 flex-1" />
+                        <button onClick={() => createComment(newComment)} className="text-white hover:text-blue-700 ml-2 px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-200 border border-blue-500 transition-colors duration-300 ease-in-out">Create</button>
+                    </div>
+                )}
             </div>
         </div>
+
     );
 };
 

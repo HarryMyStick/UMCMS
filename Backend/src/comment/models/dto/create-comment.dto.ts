@@ -1,4 +1,4 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateCommentDto {
   @IsNotEmpty()
@@ -12,4 +12,10 @@ export class CreateCommentDto {
 
   @IsNotEmpty()
   submission_date: Date;
+  
+  @IsOptional()
+  student_submission_date: Date | null = null;
+
+  @IsOptional()
+  student_reply: string | null = null;
 }

@@ -105,14 +105,40 @@ export class ContributionService {
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .innerJoin('sc.academic_year_id', 'ay')
       .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
+      .andWhere('sc.status <> :status', { status: 'Published' })
       .andWhere('ay.academic_year = :academicYear', { academicYear: year })
       .addSelect(['sc', 'sc.user_id'])
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
   }
 
-
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status <> :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getContributionsByFacultyNameApprove(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status IN (:...statuses)', { statuses: ['Approved', 'Published'] }) 
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getAllContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
