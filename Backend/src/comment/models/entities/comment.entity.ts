@@ -21,6 +21,12 @@ export class Comment extends BaseEntity {
   @Column()
   comment_content: string;
 
+  @Column({ nullable: true })
+  student_reply: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   submission_date: Date;
+
+  @CreateDateColumn({ type: 'timestamp', nullable: true, default: null })
+  student_submission_date: Date | null;
 }

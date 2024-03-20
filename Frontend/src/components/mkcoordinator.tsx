@@ -625,7 +625,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
                   {isCommentOpen ? (
                     <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
                       <div className="bg-white p-4 rounded-lg">
-                        <Comment isOpen={isCommentOpen} onClose={closeCommentPopup} contribution_id={contributionIdIndex} />
+                        <Comment isOpen={isCommentOpen} onClose={closeCommentPopup} contribution_id={contributionIdIndex} role="Marketing Coordinator" />
                       </div>
                     </div>
                   ) : null}
@@ -692,8 +692,8 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
                                 >
                                   <option value="default">Select Status</option>
                                   <option value="Pending">Pending</option>
-                                  <option value="Approve">Approve</option>
-                                  <option value="Deny">Deny</option>
+                                  <option value="Approved">Approved</option>
+                                  <option value="Denined">Denined</option>
                                 </select>
                                 <button
                                   className="text-green-600 hover:text-green-900 p-1 mr-1"

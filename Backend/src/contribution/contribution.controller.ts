@@ -71,6 +71,11 @@ export class ContributionController {
     return this.contributionService.getContributionsByFacultyName(facultyName);
   }
 
+  @Get('getContributionsByFacultyNameApprove/:facultyName')
+  async getContributionsByFacultyNameApprove(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
+    return this.contributionService.getContributionsByFacultyNameApprove(facultyName);
+  }
+
   @Get('getContributionViaUserId/:user_id')
   async getContributionViaUserId(@Param('user_id') user_id: string): Promise<Contribution[]> {
     return this.contributionService.getContributionViaUserId(user_id);

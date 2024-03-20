@@ -4,6 +4,7 @@ import { CreateCommentDto } from './models/dto/create-comment.dto';
 import { Comment } from './models/entities/comment.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateCommentDto } from './models/dto/update-comment.dto';
+import { StudentReplyDto } from './models/dto/student-reply.dto';
 
 @ApiTags('Comment')
 @Controller('comment')
@@ -28,6 +29,11 @@ export class CommentController {
   @Delete('deleteComment/:commentId')
   async deleteComment(@Param('commentId') commentId: string): Promise<void> {
     return this.commentService.deleteComment(commentId);
+  }
+
+  @Post('studentReply')
+  async studentReply(@Body() StudentReplyDto: StudentReplyDto): Promise<Comment> {
+    return this.commentService.studentReply(StudentReplyDto);
   }
 
 }

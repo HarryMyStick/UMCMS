@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateCommentDto } from './models/dto/create-comment.dto';
 import { Contribution } from 'src/contribution/models/entities/contribution.entity';
 import { UpdateCommentDto } from './models/dto/update-comment.dto';
+import { StudentReplyDto } from './models/dto/student-reply.dto';
 
 @Injectable()
 export class CommentService {
@@ -61,5 +62,20 @@ export class CommentService {
     if (result.affected === 0) {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
+  }
+
+  async studentReply(studentReplyDto: StudentReplyDto): Promise<Comment> {
+    const comment = await this.commentRepository.findOne({
+      where: [{comment_id: studentReplyDto.comment_id}],
+    });
+
+    if (!comment) {
+      throw new NotFoundException(`Comment with ID ${studentReplyDto.comment_id} not found`);
+    }
+
+    comment.student_reply = studentReplyDto.student_reply;
+    comment.student_submission_date = studentReplyDto.student_submission_date;
+
+    return this.commentRepository.save(comment);
   }
 }

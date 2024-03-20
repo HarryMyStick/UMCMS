@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
 import Chat from "./chat";
+import Comment from './comment';
 
 interface NavProps {
   userId: string;
@@ -56,6 +57,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [wordFile, setWordFile] = useState<File | null | undefined>(null);
   const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [contributionIdIndex, setContributionIdIndex] = useState("");
 
   const title = useRef<HTMLInputElement>(null);
   const description = useRef<HTMLInputElement>(null);
@@ -128,6 +131,15 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   };
   const handleEditProfile = (index: number) => {
     setEditingRowIndex(index);
+  };
+  
+  const closeCommentPopup = () => {
+    setIsCommentOpen(false);
+  };
+
+  const openCommentPopup = (contributionId: string) => {
+    setContributionIdIndex(contributionId);
+    setIsCommentOpen(true);
   };
 
   // start method reset form submit contributions
@@ -1206,6 +1218,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           {notification.message}
                         </div>
                       )}
+                      {isCommentOpen ? (
+                        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                          <div className="bg-white p-4 rounded-lg">
+                            <Comment isOpen={isCommentOpen} onClose={closeCommentPopup} contribution_id={contributionIdIndex} role="Student" />
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="flex justify-end mb-4">
                         <select
                           className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
@@ -1232,6 +1251,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Comment</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
                           </tr>
                         </thead>
@@ -1251,6 +1271,9 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </td>
                               <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                                 <div className="text-sm text-gray-900">{magazine.sc_status}</div>
+                              </td>
+                              <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
+                                <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
                               </td>
                               <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                                 <button
