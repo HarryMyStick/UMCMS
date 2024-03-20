@@ -29,9 +29,6 @@ export class Contribution extends BaseEntity {
   @Column()
   article_content_url: string;
 
-  @Column({ default: "Marketing Coordinator did not comment yet." })
-  comment: string;
-
   @Column({ default: "default" })
   image_url: string;
 

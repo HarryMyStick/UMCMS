@@ -40,7 +40,7 @@ export const Dashboard: NextPage = () => {
       dashboardContent = <Student userId={userId} />;
       break;
     case "Marketing Coordinator":
-      dashboardContent = <Mkcoordinator userId={userId} />;
+      dashboardContent = <Mkcoordinator userId={userId} role_name={roleName} />;
       break;
     case "Administrator":
       dashboardContent = <Administrator userId={userId} />;
@@ -58,17 +58,6 @@ export const Dashboard: NextPage = () => {
   return (
     <div>
       {dashboardContent}
-      {/* Your dashboard content */}
-      <div className="flex-grow flex items-center justify-center relative z-10">
-        <div className="w-full sm:w-96 xl:mt[150px] lg:mt-[150px] flex flex-col gap-5 bg-white rounded-2xl p-5 pt-2 pb-3">
-          <div className="flex justify-between items-center">
-            <h1>User ID: {userId}</h1>
-            <h2>Role Name: {roleName}</h2>
-          </div>
-          {/* Dashboard content goes here */}
-        </div>
-      </div>
-
     </div>
   );
 };

@@ -31,6 +31,11 @@ export class UsersController {
     return this.usersService.getAllUsersWithRoles();
   }
 
+  @Get('getUserByUserId/:user_id')
+  async getUserByUserId(@Param('user_id') userId: string): Promise<User> {
+    return this.usersService.getUserByUserId(userId);
+  }
+
   @Post('updateUserRole')
   async updateUserRole(@Body() updateRoleUserDto: UpdateRoleUserDto): Promise<User> {
     return this.usersService.updateUserRole(updateRoleUserDto);

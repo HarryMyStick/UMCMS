@@ -88,6 +88,17 @@ export class UsersService {
     return faculty;
   }
 
+  async getUserByUserId(userId: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+       where: { user_id: userId },
+      });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
   async getAllUsersWithRoles(): Promise<User[]> {
     return this.usersRepository.find({ relations: ['role'] });
   }
