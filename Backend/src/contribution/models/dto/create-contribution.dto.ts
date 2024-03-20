@@ -16,9 +16,6 @@ export class CreateContributionDto {
   @IsNotEmpty()
   article_content_url: string;
 
-  @IsNotEmpty()
-  comment: string;
-
   @IsOptional()
   image_url: string = 'default_image_url';
 

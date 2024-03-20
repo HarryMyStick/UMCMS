@@ -9,7 +9,6 @@ import * as fs from 'fs';
 import { UpdateStatusDto } from './models/dto/update-status.dto';
 import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.dto';
 import { Response } from 'express';
-import { UpdateCommentDto } from './models/dto/update-comment.dto';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 import { UpdateContributionDto } from './models/dto/update-contribution.dto';
 
@@ -114,11 +113,6 @@ export class ContributionController {
   @Post('updateStatus')
   updateStatus(@Body() updateStatusDto: UpdateStatusDto): Promise<Contribution> {
     return this.contributionService.updateContributionStatus(updateStatusDto);
-  }
-
-  @Post('updateComment')
-  updateComment(@Body() updateCommentDto: UpdateCommentDto): Promise<Contribution> {
-    return this.contributionService.updateContributionComment(updateCommentDto);
   }
 
   @Post('getAllContributionPublished')

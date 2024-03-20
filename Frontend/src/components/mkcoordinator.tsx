@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
+import Comment from './comment';
+import Chat from "./chat";
 
 interface NavProps {
   userId: string;
+  role_name: string;
 }
 
 interface Profile {
@@ -32,8 +35,7 @@ interface AcademicYear {
   academic_year: string;
 }
 
-
-const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
+const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
   const router = useRouter();
   const firstName = useRef<HTMLInputElement>(null);
   const lastName = useRef<HTMLInputElement>(null);
@@ -45,20 +47,20 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
-  const [editingCommentRowIndex, setEditingCommentRowIndex] = useState<number | null>(null);
   const [editedStatus, setEditedStatus] = useState("");
   const [editedYear, setEditedYear] = useState("");
   const [editedYearManage, setEditedYearManage] = useState("");
-  const [editedComment, setEditedComment] = useState("");
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [contributionIdIndex, setContributionIdIndex] = useState("");
 
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
 
-  const tabs = ["Home", "Manage Contribution", "Profile"];
+  const tabs = ["Home", "Manage Contribution", "Profile", "Chat"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    return storedTabIndex ? parseInt(storedTabIndex) : 0;
   });
 
   useEffect(() => {
@@ -86,6 +88,15 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   useEffect(() => {
     sessionStorage.setItem("activeTabIndex", activeTab.toString());
   }, [activeTab]);
+
+  const openCommentPopup = (contributionId: string) => {
+    setContributionIdIndex(contributionId);
+    setIsCommentOpen(true);
+  };
+
+  const closeCommentPopup = () => {
+    setIsCommentOpen(false);
+  };
 
   const handleChangeYear = (year: string) => {
     if ((year === "default") || (year === "")) {
@@ -126,16 +137,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
   const handleCancelEdit = () => {
     setEditingRowIndex(null);
     setEditedStatus("");
-  };
-
-  const handleEditComment = (index: number, content: string) => {
-    setEditingCommentRowIndex(index);
-    setEditedComment(content);
-  };
-
-  const handleCancelCommentEdit = () => {
-    setEditingCommentRowIndex(null);
-    setEditedComment("");
   };
 
   const showAllMagazineByFacultyAndYear = async (year: string) => {
@@ -407,35 +408,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
     }
   };
 
-  const handleSaveComment = async (index: number, contributionId: string, comment: string) => {
-    if (comment !== "") {
-      try {
-        const response = await fetch(`${urlBackend}/contribution/updateComment`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contribution_id: contributionId,
-            comment: comment,
-          }),
-        });
-        if (response.ok) {
-          displayMessage("success", "Change comment successfully.");
-          showAllMagazineBelongToFaculty();
-          showMagazineOfStudent();
-          setEditingCommentRowIndex(null);
-          setEditedComment("");
-        } else {
-          displayMessage("error", "Change comment unsuccessfully due to some error.");
-          console.error("There are some error occur.");
-        }
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
-    }
-  };
-
   const handleSaveProfile = async () => {
     const fieldFirstName = firstName.current?.value.trim();
     const fieldLastName = lastName.current?.value.trim();
@@ -498,6 +470,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
 
   return (
     <div className="flex flex-col bg_white">
+    <Chat userId = {userId} role ={role_name} />
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
         <nav className="flex flex-row items-center justify-between p-3">
           <div className="flex items-center justify-between">
@@ -649,6 +622,14 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                       {notification.message}
                     </div>
                   )}
+                  {isCommentOpen ? (
+                    <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                      <div className="bg-white p-4 rounded-lg">
+                        <Comment isOpen={isCommentOpen} onClose={closeCommentPopup} contribution_id={contributionIdIndex} />
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="flex justify-end mb-4">
                     <select
                       className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
@@ -711,8 +692,8 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                                 >
                                   <option value="default">Select Status</option>
                                   <option value="Pending">Pending</option>
-                                  <option value="Published">Published</option>
-                                  <option value="Denined">Denined</option>
+                                  <option value="Approve">Approve</option>
+                                  <option value="Deny">Deny</option>
                                 </select>
                                 <button
                                   className="text-green-600 hover:text-green-900 p-1 mr-1"
@@ -753,41 +734,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                             )}
                           </td>
                           <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
-                            {editingCommentRowIndex === index ? (
-                              <div className="flex items-center">
-                                <textarea
-                                  className="text-sm text-gray-900 h-20 w-full resize-none"
-                                  value={editedComment}
-                                  onChange={(e) => setEditedComment(e.target.value)}
-                                />
-                                <div>
-                                  <button
-                                    className="text-green-600 hover:text-green-900 p-1 mr-1"
-                                    onClick={() => handleSaveComment(index, magazine.sc_contribution_id, editedComment)}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    className="text-red-600 hover:text-red-900 p-1"
-                                    onClick={() => handleCancelCommentEdit()}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-center text-left">
-                                <div className="w-full">{magazine.sc_comment}</div>
-                                <button
-                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900"
-                                  onClick={() => handleEditComment(index, magazine.sc_comment)}
-                                >
-                                  <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
-                                  </svg>
-                                </button>
-                              </div>
-                            )}
+                            <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium border-b border-gray-300">
                             <button
@@ -997,7 +944,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                           </div>
                         </div>
                       )}
-                      <hr className="border-b-1 border-blueGray-300 mt-6" />
                     </div>
 
                   </div>
@@ -1005,7 +951,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             )}
-            {/* End View Profile */}
           </div>
         ))}
       </div>

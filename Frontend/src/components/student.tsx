@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
+import Chat from "./chat";
 
 interface NavProps {
   userId: string;
@@ -62,10 +63,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const titleUpdate = useRef<HTMLInputElement>(null);
   const descriptionUpdate = useRef<HTMLInputElement>(null);
 
-  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
+  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile", "Chat"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    return storedTabIndex ? parseInt(storedTabIndex) : 0;
   });
 
   useEffect(() => {
@@ -128,7 +129,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = (index: number) => {
     setEditingRowIndex(index);
   };
-  
+
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
@@ -182,7 +183,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
         if (wordFile) {
           formData.append("articleFile", wordFile as Blob);
-        }         
+        }
         if (imageFile) {
           const dataFormImage = new FormData();
 
@@ -525,7 +526,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   if (!profile) {
     return <div>Loading...</div>;
   }
-  
+
   const handleSaveProfile = async () => {
     const fieldFirstName = firstName.current?.value.trim();
     const fieldLastName = lastName.current?.value.trim();
@@ -583,7 +584,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setImageFiles(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        displayMessage("error","Please select a PNG or JPEG image file.")
+        displayMessage("error", "Please select a PNG or JPEG image file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
@@ -597,7 +598,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setWordFile(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        displayMessage("error","Please select a Word document file.")
+        displayMessage("error", "Please select a Word document file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
@@ -617,7 +618,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
       if (fieldTitle === "" || fieldDescription === "") {
-        setNotification({type: "error", message: "Please enter full information."});
+        setNotification({ type: "error", message: "Please enter full information." });
       }
       const currentYear = new Date().getFullYear();
       const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
@@ -657,7 +658,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           if (uploadImageResponse.ok) {
             // Image upload successful
           } else {
-            setNotification({type: "error", message: "Please enter full information."});
+            setNotification({ type: "error", message: "Please enter full information." });
             return;
           }
         } else {
@@ -674,6 +675,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   return (
     <div className="flex flex-col bg_white">
+      <Chat userId={userId} role="Student" />
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
         <nav className="flex flex-row items-center justify-between p-3">
           <div className="flex items-center justify-between">
@@ -978,7 +980,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </label>
                             </div>
                           </div>
-                          <hr className="border-b-1 border-blueGray-300 mt-6" />
                         </div>
                       </form>
                     </div>
@@ -1184,7 +1185,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   </label>
                                 </div>
                               </div>
-                              <hr className="border-b-1 border-blueGray-300 mt-6" />
                             </div>
                           </form>
                         </div>
@@ -1472,7 +1472,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           </div>
                         </div>
                       )}
-                      <hr className="border-b-1 border-blueGray-300 mt-6" />
                     </div>
 
                   </div>
@@ -1480,7 +1479,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             )}
-            {/* End View Profile */}
           </div>
         ))
         }

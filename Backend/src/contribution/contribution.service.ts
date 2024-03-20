@@ -10,7 +10,6 @@ import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.d
 import * as path from 'path';
 import * as fs from 'fs';
 import { join } from 'path';
-import { UpdateCommentDto } from './models/dto/update-comment.dto';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 import { UpdateContributionDto } from './models/dto/update-contribution.dto';
 
@@ -223,20 +222,6 @@ export class ContributionService {
       throw new NotFoundException('Contribution not found');
     }
     contribution.status = updateStatusDto.status;
-    const updatedContribution = await contribution.save();
-
-    return updatedContribution;
-  }
-
-  async updateContributionComment(updateCommentDto: UpdateCommentDto): Promise<Contribution> {
-    const contribution = await this.contributionRepository.findOne({
-      where: [{ contribution_id: updateCommentDto.contribution_id }],
-    });
-
-    if (!contribution) {
-      throw new NotFoundException('Contribution not found');
-    }
-    contribution.comment = updateCommentDto.comment;
     const updatedContribution = await contribution.save();
 
     return updatedContribution;
