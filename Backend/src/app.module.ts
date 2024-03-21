@@ -14,6 +14,7 @@ import { ContributionModule } from './contribution/contribution.module';
 import { AcademicYearModule } from './academic_year/academic-year.module';
 import { CommentModule } from './comment/comment.module';
 import { MessageModule } from './websockets/message.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { MessageModule } from './websockets/message.module';
     AcademicYearModule,
     CommentModule,
     MessageModule,
+    MailModule,
     MulterModule.register({
       limits: {
         fileSize: 10 * 1024 * 1024,

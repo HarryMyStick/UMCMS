@@ -52,7 +52,8 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
   const tabs = ["Home", "Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    const tabsLength = tabs.length;
+    return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
   
   useEffect(() => {
@@ -434,13 +435,13 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Profile information &gt;
                     </p>
-                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
                       Your profile information<span className="bg-darkBlue"></span>
                     </h1>
-                    <div className="mt-12 lg:flex lg:justify-start">
+                    <div className="mt-3 lg:flex lg:justify-start">
                       <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
                       </p>
                     </div>
@@ -620,7 +621,6 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                           </div>
                         </div>
                       )}
-                      <hr className="border-b-1 border-blueGray-300 mt-6" />
                     </div>
 
                   </div>

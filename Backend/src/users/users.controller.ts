@@ -5,6 +5,8 @@ import { User } from './models/entities/user.entity';
 import { ApiTags } from '@nestjs/swagger';
 import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
+import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
+import { Profile } from 'src/profile/models/entities/profile.entity';
 
 @ApiTags('Users')
 @Controller('users')
@@ -36,9 +38,9 @@ export class UsersController {
     return this.usersService.getUserByUserId(userId);
   }
 
-  @Post('updateUserRole')
-  async updateUserRole(@Body() updateRoleUserDto: UpdateRoleUserDto): Promise<User> {
-    return this.usersService.updateUserRole(updateRoleUserDto);
+  @Post('updateUser')
+  async updateUser(@Body() updateUserDto: UpdateRoleUserDto): Promise<User> {
+    return this.usersService.updateUser(updateUserDto);
   }
 
   @Post('deleteUser/:user_id')
@@ -46,5 +48,15 @@ export class UsersController {
     return this.usersService.deleteUser(user_id);
   }
 
+  @Post('adminRegister')
+  adminCreateUser(@Body() adminCreateUserDto: AdminCreateUserDto): Promise<User> {
+    return this.usersService.adminCreateUser(adminCreateUserDto);
+  }
+
+  @Post('getProfileOfMK/:facultyName')
+  async getProfileOfMK(@Param('facultyName') facultyName: string): Promise<Profile> {
+    const profile = await this.usersService.findProfileByRoleAndFaculty(facultyName);
+    return profile;
+  }
 
 }

@@ -32,6 +32,8 @@ interface Magazine {
 interface AcademicYear {
   academic_year_id: string;
   academic_year: string;
+  closure_date: string;
+  final_closure_date: string;
 }
 
 const Student: React.FC<NavProps> = ({ userId }) => {
@@ -59,6 +61,9 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [contributionIdIndex, setContributionIdIndex] = useState("");
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<AcademicYear>();
+  const [userFacultyName, setUserFacultyName] = useState("");
+  const [mkEmail, setMkEmail] = useState("");
 
   const title = useRef<HTMLInputElement>(null);
   const description = useRef<HTMLInputElement>(null);
@@ -66,11 +71,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const titleUpdate = useRef<HTMLInputElement>(null);
   const descriptionUpdate = useRef<HTMLInputElement>(null);
 
-  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile", "Chat"];
+  const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0;
+    const tabsLength = tabs.length;
+    return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
+
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -95,7 +102,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
     }
     fetchProfileData();
-    getAcademicYear();
+    getAllAcademicYear();
+    getAcademicYearByYear();
+    getFacultyByUserId();
+    getMkProfile();
   }, []);
 
   const handleLogout = () => {
@@ -113,13 +123,24 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   }
 
   const handleEdit = (contribution: any) => {
-    setEditingContribution({
-      contribution_id: contribution.sc_contribution_id,
-      title: contribution.sc_article_title,
-      description: contribution.sc_article_description,
-      urlImage: contribution.sc_image_url,
-      urlWord: contribution.sc_article_content_url,
-    });
+    if (currentAcademicYear) {
+      const final_closure_date = new Date(currentAcademicYear?.final_closure_date);
+      const currentDate = new Date();
+        if (currentDate > final_closure_date) {
+          setNotification({ type: "error", message: "The final deadline for edit contribution is end. Thanks for your contributions!!" });
+        } else {
+          setEditingContribution({
+            contribution_id: contribution.sc_contribution_id,
+            title: contribution.sc_article_title,
+            description: contribution.sc_article_description,
+            urlImage: contribution.sc_image_url,
+            urlWord: contribution.sc_article_content_url,
+          });
+        }
+      } else {
+        getAcademicYearByYear();
+        handleEdit(contribution);
+      }
   };
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,7 +153,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = (index: number) => {
     setEditingRowIndex(index);
   };
-  
+
   const closeCommentPopup = () => {
     setIsCommentOpen(false);
   };
@@ -145,13 +166,58 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-      await fetchUploadData(); // Gửi dữ liệu
-      setAgree(false); // Đặt lại trạng thái của checkbox
-      // setFormSent(true); // Đặt trạng thái của form thành đã gửi
+
+      if (currentAcademicYear) {
+        const currentDate = new Date();
+        const closureDate = new Date(currentAcademicYear?.closure_date);
+        if (currentDate > closureDate) {
+          setNotification({ type: "error", message: "Time to contribute to the magazine is end. Thanks for your contributions!" })
+        } else {
+          await fetchUploadData();
+          setAgree(false);
+          getFacultyByUserId();
+          getMkProfile();
+          const currentTime = new Date();
+          const formattedTime = currentTime.toLocaleString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
+          sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+        }
+      } else {
+        getAcademicYearByYear();
+        handleSentFile();
+      }
     } catch (error) {
       displayMessage("success", "Saved successfully!")
     }
   };
+
+  const sendEmail = async (recipientEmail: string, subject: string, message: string) => {
+    try {
+      console.log("email called");
+      const response = await fetch(`${urlBackend}/email/send/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipientEmail: recipientEmail,
+          subject: subject,
+          message: message,
+        })
+      });
+      if (response.ok) {
+        console.log("send email success!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
 
   const handleUpdateFile = async (contribution_id: string) => {
     try {
@@ -261,7 +327,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       setNotification({ type: 'error', message: 'An error occurred while deleting contribution' });
     }
   };
-  const getAcademicYear = async () => {
+  const getAllAcademicYear = async () => {
     try {
       const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
         method: "GET",
@@ -277,7 +343,24 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       displayMessage("error", "Error fetching profile data");
     }
   }
-  // End delete contribution
+
+  const getAcademicYearByYear = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (getAcademicYearId.ok) {
+        const data = await getAcademicYearId.json();
+        setCurrentAcademicYear(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function handleFileDownload(filename: string) {
     try {
@@ -313,6 +396,41 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       showMagazineOfStudent();
     } else {
       showAllMagazineByFacultyAndYearNonPublish(year);
+    }
+  }
+
+  const getFacultyByUserId = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        setUserFacultyName(facultyName);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const getMkProfile = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMkEmail(data.email);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -746,12 +864,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Home &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      All Magazine<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
@@ -816,12 +938,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
-                      Contribute article &gt;
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Contribute Articles &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Contribute your article magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Contribute Your Article<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
@@ -1003,12 +1129,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
-                      Manage contributions &gt;
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Manage Contribution &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Manage my contributions
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Your Contributions<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 {
@@ -1311,12 +1441,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Profile information &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Your profile information
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Your profile information<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div>

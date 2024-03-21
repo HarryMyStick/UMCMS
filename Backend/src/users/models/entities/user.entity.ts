@@ -28,6 +28,6 @@ export class User extends BaseEntity {
 
   @ManyToOne(() => Faculty)
   @JoinColumn({ name: 'faculty_id' })
-  faculty_id: Faculty;
+  faculty: Faculty;
 }
 
