@@ -58,7 +58,8 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
   const tabs = ["Home", "Manage Contribution","Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    const tabsLength = tabs.length;
+    return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
 
   useEffect(() => {
@@ -529,12 +530,16 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Home &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      All Magazine<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
@@ -608,12 +613,16 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Manage Contribution &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Contribution Table
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Manage Contribution / Publish Magazine<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
@@ -753,13 +762,13 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Profile information &gt;
                     </p>
-                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
                       Your profile information<span className="bg-darkBlue"></span>
                     </h1>
-                    <div className="mt-12 lg:flex lg:justify-start">
+                    <div className="mt-3 lg:flex lg:justify-start">
                       <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
                       </p>
                     </div>
