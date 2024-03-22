@@ -30,4 +30,9 @@ export class AcademicYearController {
     return this.academicYearService.updateAcadamicYear(UpdateAcademicYearDto);
   }
 
+  @Post('deleteYear/:academic_year_id')
+  async deleteYear(@Param('academic_year_id') academic_year_id: string): Promise<void> {
+    return this.academicYearService.deleteYear(academic_year_id);
+  }
+
 }
