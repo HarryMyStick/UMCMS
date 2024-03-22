@@ -471,7 +471,6 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
 
   return (
     <div className="flex flex-col bg_white">
-      <Chat userId={userId} role={role_name} />
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
         <nav className="flex flex-row items-center justify-between p-3">
           <div className="flex items-center justify-between">
@@ -963,6 +962,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
           </div>
         ))}
       </div>
+      <Chat userId={userId} role={role_name} />
     </div >
   );
 };

@@ -127,7 +127,6 @@ const Chat: React.FC<{ userId: string; role: string }> = ({ userId, role }) => {
         <div>
             {open ? (
                 <div className="fixed bottom-8 right-8 w-96 h-96 bg-sky-500 border border-gray-500 rounded-lg p-4">
-                    {/* Header section */}
                     <div className="flex items-center justify-between mb-4 text-white">
                         {role === "Student" ? (
                             <h1 className="text-lg font-semibold">Chat with your Marketing Coordinator</h1>
@@ -136,7 +135,6 @@ const Chat: React.FC<{ userId: string; role: string }> = ({ userId, role }) => {
                         )}
                         <button onClick={() => toggleChat('close')} className="w-8 h-8 bg-white text-black rounded-full">X</button>
                     </div>
-                    {/* Messages section with border */}
                     <div className="h-60 overflow-y-auto bg-white border border-gray-300 rounded-md mb-4 p-2">
                         {messages.map((message, index) => (
                             <div key={index}>
