@@ -120,9 +120,21 @@ export class ContributionController {
     return this.contributionService.updateContributionStatus(updateStatusDto);
   }
 
+
+
   @Post('getAllContributionPublished')
   async getAllContributionPublished(): Promise<Contribution[]> {
     return this.contributionService.getAllPublishedContributions();
+  }
+
+  @Post('getAllContributions')
+  async getAllContributions(): Promise<Contribution[]> {
+    return this.contributionService.getAllContributions();
+  }
+
+  @Post('getAllContributionsByYear')
+  async getAllContributionsByYear(@Body('year') year: string): Promise<Contribution[]> {
+    return this.contributionService.getAllContributionsByYear(year);
   }
 
   @Post('getPublishContributionsByYear')
