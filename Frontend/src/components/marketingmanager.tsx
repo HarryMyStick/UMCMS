@@ -49,11 +49,17 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editedStatus, setEditedStatus] = useState("");
+  const [editedYearManage, setEditedYearManage] = useState("");
 
-  const tabs = ["Home", "Profile"];
+
+  const tabs = ["Home", "Manage Contribution","Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    const tabsLength = tabs.length;
+    return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
 
   useEffect(() => {
@@ -68,6 +74,11 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
       showAllMagazine();
     } else {
       showAllMagazineByFacultyAndYear(editedYear);
+    }
+    if ((editedYearManage === "default") || (editedYearManage === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
     }
     fetchProfileData();
     getAcademicYear();
@@ -84,6 +95,52 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
       showAllMagazineByFacultyAndYear(year);
     }
   }
+
+  const handleChangeYearNonPublish = (year: string) => {
+    if ((year === "default") || (year === "")) {
+      showMagazineOfStudent();
+    } else {
+      showAllMagazineByFacultyAndYearNonPublish(year);
+    }
+  }
+
+  const handleSaveStatus = async (index: number, contributionId: string, contributionStatus: string) => {
+    if (contributionStatus !== "" && "default") {
+      try {
+        const response = await fetch(`${urlBackend}/contribution/updateStatus`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contribution_id: contributionId,
+            status: contributionStatus,
+          }),
+        });
+        if (response.ok) {
+          displayMessage("success", "Change status successfully.");
+          showAllMagazine();
+          showMagazineOfStudent();
+          setEditingRowIndex(null);
+          setEditedStatus("");
+        } else {
+          console.error("Error:", response.statusText);
+          displayMessage("error", "Change status unsuccessfully due to some error.");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+  };
+
+  const handleEditStatus = (index: number) => {
+    setEditingRowIndex(index);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRowIndex(null);
+    setEditedStatus("");
+  };
 
   const handleDownloadAllFiles = async () => {
     try {
@@ -134,6 +191,103 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
 
   const handleEditProfile = () => {
     setIsEditing(true);
+  };
+
+  const showMagazineOfStudent = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameApprove/${facultyName}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          }
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setMagazines(magazineData);
+          console.log('set magazine student');
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.error("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
+  };
+
+  const showAllMagazineByFacultyAndYearNonPublish = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: facultyName,
+            year: year,
+          }),
+        });
+
+        if (getMagazineResponse.ok) {
+          const magazineData = await getMagazineResponse.json();
+          for (const magazine of magazineData) {
+            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              }
+            });
+
+            if (getImageResponse.ok) {
+              const imageUrl = await getImageResponse.text();
+              magazine.sc_image_url = imageUrl;
+            }
+          }
+          setMagazines(magazineData);
+        } else {
+          console.log("Magazine cannot loading.");
+          return;
+        }
+      } else {
+        console.log("Cannot get faculty by user_id.");
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    }
   };
 
   const showAllMagazineByFacultyAndYear = async (year: string) => {
@@ -376,12 +530,16 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Home &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      All Magazine<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
@@ -429,6 +587,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                                 Author: {publishMagazines.p_first_name + ' ' + publishMagazines.p_last_name}
                               </span>
                             </h3>
+                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-indigo-600"> {publishMagazines.sc_article_title}</h3>
                             <p className="text-base font-semibold text-gray-900 group-hover:text-indigo-600">
                               {publishMagazines.sc_article_description}
                             </p>
@@ -450,17 +609,166 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                 </section>
               </div>
             )}
-            {index === 1 && (
+            {index === 1 &&
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Manage Contribution &gt;
+                    </p>
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Manage Contribution / Publish Magazine<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12" >
+                  {notification && (
+                    <div
+                      className={`p-3 text-sm rounded-md ${notification.type === "error"
+                        ? "bg-red-100 border border-red-300 text-red-900"
+                        : notification.type === "warning"
+                          ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                          : notification.type === "success"
+                            ? "bg-green-100 border border-green-300 text-green-900"
+                            : ""
+                        }`}
+                    >
+                      {notification.message}
+                    </div>
+                  )}
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYearManage}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYearManage(selectedValue);
+                        handleChangeYearNonPublish(selectedValue);
+                      }}
+                    >
+                      <option value="default">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Image</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Author</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {magazines.map((magazine, index) => (
+                        <tr key={magazine.sc_contribution_id} className="bg-white text-center">
+                          <td className="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                            <div className="flex-shrink-0 h-20 w-20">
+                              <img className="h-20 w-20 rounded-full" src={magazine.sc_image_url} alt={magazine.sc_article_title} />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm font-medium text-gray-900">{magazine.sc_article_title}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm font-medium text-gray-900">{magazine.p_first_name} {magazine.p_last_name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-normal border-b border-gray-300">
+                            <div className="text-sm text-gray-900">{magazine.sc_article_description}</div>
+                          </td>
+                          <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                            {editingRowIndex === index ? (
+                              <div className="flex items-center">
+                                <select
+                                  className="text-sm text-gray-900"
+                                  defaultValue={"default"}
+                                  value={editedStatus}
+                                  onChange={(e) => {
+                                    const selectedValue = e.target.value;
+                                    setEditedStatus(selectedValue);
+                                  }}
+                                >
+                                  <option value="default">Select Status</option>
+                                  <option value="Published">Published</option>
+                                  <option value="Approved">Approved</option>
+                                </select>
+                                <button
+                                  className="text-green-600 hover:text-green-900 p-1 mr-1"
+                                  onClick={() => handleSaveStatus(index, magazine.sc_contribution_id, editedStatus)}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  className="text-red-600 hover:text-red-900 p-1"
+                                  onClick={() => handleCancelEdit()}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center">
+                                <div className="text-sm text-gray-900">{magazine.sc_status}</div>
+                                <button
+                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900 p-1"
+                                  onClick={() => handleEditStatus(index)}
+                                >
+                                  <svg
+                                    className="w-5 h-5 mt-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium border-b border-gray-300">
+                            <button
+                              className="text-green-600 hover:text-green-900"
+                              onClick={() => handleFileDownload(magazine.sc_article_content_url)}
+                            >
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.5 10l-5 5-5-5h3V4h4v6zm4.5 7H4v2h16v-2z" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              </div>
+            }
+            {index === 2 && (
+              <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Profile information &gt;
                     </p>
-                    <h1 className="mt-9 text-3xl font-semibold text-dark md:text-4xl">
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
                       Your profile information<span className="bg-darkBlue"></span>
                     </h1>
-                    <div className="mt-12 lg:flex lg:justify-start">
+                    <div className="mt-3 lg:flex lg:justify-start">
                       <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
                       </p>
                     </div>

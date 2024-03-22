@@ -10,7 +10,6 @@ import { UpdateContributionUrlDto } from './models/dto/update-contribution_url.d
 import * as path from 'path';
 import * as fs from 'fs';
 import { join } from 'path';
-import { UpdateCommentDto } from './models/dto/update-comment.dto';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 import { UpdateContributionDto } from './models/dto/update-contribution.dto';
 
@@ -70,7 +69,7 @@ export class ContributionService {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .where('f.faculty_name = :facultyName', { facultyName })
       .andWhere('sc.status = :status', { status: 'Published' })
@@ -85,7 +84,7 @@ export class ContributionService {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .innerJoin('sc.academic_year_id', 'ay')
       .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
@@ -102,22 +101,48 @@ export class ContributionService {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .innerJoin('sc.academic_year_id', 'ay')
       .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
+      .andWhere('sc.status <> :status', { status: 'Published' })
       .andWhere('ay.academic_year = :academicYear', { academicYear: year })
       .addSelect(['sc', 'sc.user_id'])
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
   }
 
-
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status <> :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getContributionsByFacultyNameApprove(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .where('f.faculty_name = :facultyName', { facultyName })
+      .andWhere('sc.status IN (:...statuses)', { statuses: ['Approved', 'Published'] }) 
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getAllContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .where('f.faculty_name = :facultyName', { facultyName })
       .addSelect(['sc', 'sc.user_id'])
@@ -228,25 +253,11 @@ export class ContributionService {
     return updatedContribution;
   }
 
-  async updateContributionComment(updateCommentDto: UpdateCommentDto): Promise<Contribution> {
-    const contribution = await this.contributionRepository.findOne({
-      where: [{ contribution_id: updateCommentDto.contribution_id }],
-    });
-
-    if (!contribution) {
-      throw new NotFoundException('Contribution not found');
-    }
-    contribution.comment = updateCommentDto.comment;
-    const updatedContribution = await contribution.save();
-
-    return updatedContribution;
-  }
-
   async getAllPublishedContributions(): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .where('sc.status = :status', { status: 'Published' })
       .addSelect(['sc', 'sc.user_id'])
@@ -258,7 +269,7 @@ export class ContributionService {
     return this.contributionRepository
       .createQueryBuilder('sc')
       .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty_id', 'f')
+      .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .innerJoin('sc.academic_year_id', 'ay')
       .where('ay.academic_year = :academicYear', { academicYear: year })
@@ -277,7 +288,7 @@ export class ContributionService {
         .addSelect('COUNT(contribution.contribution_id)', 'contributionCount')
         .innerJoin('contribution.academic_year_id', 'academic_year')
         .innerJoin('contribution.user_id', 'user')
-        .innerJoin('user.faculty_id', 'faculty')
+        .innerJoin('user.faculty', 'faculty')
         .where('contribution.status = :status', { status: 'Published' })
         .andWhere('academic_year.academic_year = :year', { year })
         .groupBy('academic_year.academic_year')
@@ -301,7 +312,7 @@ export class ContributionService {
         .addSelect('COUNT(DISTINCT user.user_id)', 'contributorCount') // Count distinct users (contributors)
         .innerJoin('contribution.academic_year_id', 'academic_year')
         .innerJoin('contribution.user_id', 'user')
-        .innerJoin('user.faculty_id', 'faculty')
+        .innerJoin('user.faculty', 'faculty')
         .where('contribution.status = :status', { status: 'Published' })
         .andWhere('academic_year.academic_year = :year', { year })
         .groupBy('academic_year.academic_year')

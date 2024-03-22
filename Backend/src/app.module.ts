@@ -1,6 +1,8 @@
+// app.module.ts
 import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import * as bodyParser from 'body-parser';
+import * as cors from 'cors'; // Update the import statement
 
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,6 +12,9 @@ import { ProfileModule } from './profile/profile.module';
 import { FacultyModule } from './faculty/faculty.module';
 import { ContributionModule } from './contribution/contribution.module';
 import { AcademicYearModule } from './academic_year/academic-year.module';
+import { CommentModule } from './comment/comment.module';
+import { MessageModule } from './websockets/message.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -17,13 +22,13 @@ import { AcademicYearModule } from './academic_year/academic-year.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'postgres', //process.env.DB_TYPE as any,
+      type: 'postgres',
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT),
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: ['dist/**/*.entity.js'],
+      entities: [__dirname + '/**/*.entity{.ts,.js}'], // Adjust entity path as per your structure
       synchronize: true,
     }),
     UsersModule,
@@ -32,10 +37,12 @@ import { AcademicYearModule } from './academic_year/academic-year.module';
     FacultyModule,
     ContributionModule,
     AcademicYearModule,
+    CommentModule,
+    MessageModule,
+    MailModule,
     MulterModule.register({
-      // Adjust these options as per your requirement
       limits: {
-        fileSize: 10 * 1024 * 1024, // 10 MB limit
+        fileSize: 10 * 1024 * 1024,
       },
     }),
   ],
@@ -43,7 +50,9 @@ import { AcademicYearModule } from './academic_year/academic-year.module';
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(bodyParser.json({ limit: '10mb' })) // Adjust limit as per your requirement
+      .apply(cors())
+      .forRoutes({ path: '*', method: RequestMethod.ALL })
+      .apply(bodyParser.json({ limit: '10mb' }))
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

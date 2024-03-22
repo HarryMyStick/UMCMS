@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
+import Chat from "./chat";
+import Comment from './comment';
 
 interface NavProps {
   userId: string;
@@ -30,6 +32,8 @@ interface Magazine {
 interface AcademicYear {
   academic_year_id: string;
   academic_year: string;
+  closure_date: string;
+  final_closure_date: string;
 }
 
 const Student: React.FC<NavProps> = ({ userId }) => {
@@ -55,6 +59,11 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [editingContribution, setEditingContribution] = useState<any>(null);
   const [wordFile, setWordFile] = useState<File | null | undefined>(null);
   const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [contributionIdIndex, setContributionIdIndex] = useState("");
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<AcademicYear>();
+  const [userFacultyName, setUserFacultyName] = useState("");
+  const [mkEmail, setMkEmail] = useState("");
 
   const title = useRef<HTMLInputElement>(null);
   const description = useRef<HTMLInputElement>(null);
@@ -65,8 +74,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const tabs = ["Home", "Contribute articles", "Manage contributions", "Manage Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
-    return storedTabIndex ? parseInt(storedTabIndex) : 0; 
+    const tabsLength = tabs.length;
+    return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
+
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -91,7 +102,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
     }
     fetchProfileData();
-    getAcademicYear();
+    getAllAcademicYear();
+    getAcademicYearByYear();
+    getFacultyByUserId();
+    getMkProfile();
   }, []);
 
   const handleLogout = () => {
@@ -109,13 +123,24 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   }
 
   const handleEdit = (contribution: any) => {
-    setEditingContribution({
-      contribution_id: contribution.sc_contribution_id,
-      title: contribution.sc_article_title,
-      description: contribution.sc_article_description,
-      urlImage: contribution.sc_image_url,
-      urlWord: contribution.sc_article_content_url,
-    });
+    if (currentAcademicYear) {
+      const final_closure_date = new Date(currentAcademicYear?.final_closure_date);
+      const currentDate = new Date();
+        if (currentDate > final_closure_date) {
+          setNotification({ type: "error", message: "The final deadline for edit contribution is end. Thanks for your contributions!!" });
+        } else {
+          setEditingContribution({
+            contribution_id: contribution.sc_contribution_id,
+            title: contribution.sc_article_title,
+            description: contribution.sc_article_description,
+            urlImage: contribution.sc_image_url,
+            urlWord: contribution.sc_article_content_url,
+          });
+        }
+      } else {
+        getAcademicYearByYear();
+        handleEdit(contribution);
+      }
   };
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,17 +153,71 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = (index: number) => {
     setEditingRowIndex(index);
   };
-  
+
+  const closeCommentPopup = () => {
+    setIsCommentOpen(false);
+  };
+
+  const openCommentPopup = (contributionId: string) => {
+    setContributionIdIndex(contributionId);
+    setIsCommentOpen(true);
+  };
+
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-      await fetchUploadData(); // Gửi dữ liệu
-      setAgree(false); // Đặt lại trạng thái của checkbox
-      // setFormSent(true); // Đặt trạng thái của form thành đã gửi
+
+      if (currentAcademicYear) {
+        const currentDate = new Date();
+        const closureDate = new Date(currentAcademicYear?.closure_date);
+        if (currentDate > closureDate) {
+          setNotification({ type: "error", message: "Time to contribute to the magazine is end. Thanks for your contributions!" })
+        } else {
+          await fetchUploadData();
+          setAgree(false);
+          getFacultyByUserId();
+          getMkProfile();
+          const currentTime = new Date();
+          const formattedTime = currentTime.toLocaleString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
+          sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+        }
+      } else {
+        getAcademicYearByYear();
+        handleSentFile();
+      }
     } catch (error) {
       displayMessage("success", "Saved successfully!")
     }
   };
+
+  const sendEmail = async (recipientEmail: string, subject: string, message: string) => {
+    try {
+      console.log("email called");
+      const response = await fetch(`${urlBackend}/email/send/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipientEmail: recipientEmail,
+          subject: subject,
+          message: message,
+        })
+      });
+      if (response.ok) {
+        console.log("send email success!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
 
   const handleUpdateFile = async (contribution_id: string) => {
     try {
@@ -182,7 +261,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
         if (wordFile) {
           formData.append("articleFile", wordFile as Blob);
-        }         
+        }
         if (imageFile) {
           const dataFormImage = new FormData();
 
@@ -248,7 +327,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       setNotification({ type: 'error', message: 'An error occurred while deleting contribution' });
     }
   };
-  const getAcademicYear = async () => {
+  const getAllAcademicYear = async () => {
     try {
       const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
         method: "GET",
@@ -264,7 +343,24 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       displayMessage("error", "Error fetching profile data");
     }
   }
-  // End delete contribution
+
+  const getAcademicYearByYear = async () => {
+    try {
+      const currentYear = new Date().getFullYear();
+      const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (getAcademicYearId.ok) {
+        const data = await getAcademicYearId.json();
+        setCurrentAcademicYear(data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   async function handleFileDownload(filename: string) {
     try {
@@ -302,6 +398,41 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       showMagazineOfStudent();
     } else {
       showAllMagazineByFacultyAndYearNonPublish(year);
+    }
+  }
+
+  const getFacultyByUserId = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const facultyName = data.faculty_name;
+        setUserFacultyName(facultyName);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const getMkProfile = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMkEmail(data.email);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -527,7 +658,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   if (!profile) {
     return <div>Loading...</div>;
   }
-  
+
   const handleSaveProfile = async () => {
     const fieldFirstName = firstName.current?.value.trim();
     const fieldLastName = lastName.current?.value.trim();
@@ -585,7 +716,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setImageFiles(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        displayMessage("error","Please select a PNG or JPEG image file.")
+        displayMessage("error", "Please select a PNG or JPEG image file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
@@ -599,7 +730,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         setWordFile(selectedFile);
       } else {
         // Hiển thị thông báo hoặc thực hiện hành động phù hợp khi người dùng chọn loại file không hợp lệ
-        displayMessage("error","Please select a Word document file.")
+        displayMessage("error", "Please select a Word document file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
     }
@@ -619,7 +750,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
       if (fieldTitle === "" || fieldDescription === "") {
-        setNotification({type: "error", message: "Please enter full information."});
+        setNotification({ type: "error", message: "Please enter full information." });
       }
       const currentYear = new Date().getFullYear();
       const getAcademicYearId = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
@@ -659,7 +790,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           if (uploadImageResponse.ok) {
             // Image upload successful
           } else {
-            setNotification({type: "error", message: "Please enter full information."});
+            setNotification({ type: "error", message: "Please enter full information." });
             return;
           }
         } else {
@@ -676,6 +807,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   return (
     <div className="flex flex-col bg_white">
+      <Chat userId={userId} role="Student" />
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
         <nav className="flex flex-row items-center justify-between p-3">
           <div className="flex items-center justify-between">
@@ -734,12 +866,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Home &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      All Magazine<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
@@ -804,12 +940,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
-                      Contribute article &gt;
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Contribute Articles &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Contribute your article magazine
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Contribute Your Article<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
@@ -980,7 +1120,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </label>
                             </div>
                           </div>
-                          <hr className="border-b-1 border-blueGray-300 mt-6" />
                         </div>
                       </form>
                     </div>
@@ -992,12 +1131,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
-                      Manage contributions &gt;
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Manage Contribution &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Manage my contributions
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Your Contributions<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 {
@@ -1186,7 +1329,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   </label>
                                 </div>
                               </div>
-                              <hr className="border-b-1 border-blueGray-300 mt-6" />
                             </div>
                           </form>
                         </div>
@@ -1208,6 +1350,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           {notification.message}
                         </div>
                       )}
+                      {isCommentOpen ? (
+                        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+                          <div className="bg-white p-4 rounded-lg">
+                            <Comment isOpen={isCommentOpen} onClose={closeCommentPopup} contribution_id={contributionIdIndex} role="Student" />
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="flex justify-end mb-4">
                         <select
                           className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
@@ -1234,6 +1383,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Title</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Description</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Comment</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
                           </tr>
                         </thead>
@@ -1253,6 +1403,9 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </td>
                               <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                                 <div className="text-sm text-gray-900">{magazine.sc_status}</div>
+                              </td>
+                              <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
+                                <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
                               </td>
                               <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                                 <button
@@ -1290,12 +1443,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
-                    <p className="text-dark mb-2 mt-1 block w-full text-sm md:text-base">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
                       Profile information &gt;
                     </p>
-                    <h1 className="mt-4 pb-6 text-3xl font-semibold text-dark md:text-4xl">
-                      Your profile information
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Your profile information<span className="bg-darkBlue"></span>
                     </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -1474,7 +1631,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           </div>
                         </div>
                       )}
-                      <hr className="border-b-1 border-blueGray-300 mt-6" />
                     </div>
 
                   </div>
@@ -1482,7 +1638,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             )}
-            {/* End View Profile */}
           </div>
         ))
         }
