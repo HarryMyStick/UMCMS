@@ -73,7 +73,11 @@ export const Register: NextPage = () => {
       });
 
       if (response.ok) {
-        await router.push("/login");
+        const data = await response.json();
+        await router.push({
+          pathname: "/profile",
+          query: { user_id: data.user_id },
+        });
       } else if (response.status === 409) {
         setErrorMessage("This account already exists.");
       } else {
