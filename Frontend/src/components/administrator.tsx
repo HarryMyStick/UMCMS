@@ -19,8 +19,8 @@ interface Profile {
 interface AcademicYear {
   academic_year_id: string;
   academic_year: string;
-  closure_date: Date;
-  final_closure_date: Date;
+  closure_date: string;
+  final_closure_date: string;
 }
 
 interface User {
@@ -55,12 +55,11 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const [academicYearsAR, setAcademicYearsAR] = useState<AcademicYear[]>([]);
   const [editedYear, setEditedYear] = useState("");
 
-  const [editMode, setEditMode] = useState(false);
-  const [closureDate, setClosureDate] = useState(new Date());
-  const [finalClosureDate, setFinalClosureDate] = useState(new Date());
+  const [createYearMode, setCreateYearMode] = useState(false);
 
   const [userList, setUserList] = useState<User[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editingYearIndex, setEditingYearIndex] = useState<number | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [createClicked, setCreateClicked] = useState(false);
@@ -68,6 +67,22 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const [newPassword, setNewPassword] = useState("");
   const [newFaculty, setNewFaculty] = useState("");
   const [newRole, setNewRole] = useState("");
+
+  const generateYears = (): string[] => {
+    const years50: string[] = [];
+    for (let year = 2000; year <= 2050; year++) {
+      years50.push(year.toString());
+    }
+    return years50;
+  };
+  const [yearRange, setYearRange] = useState<string>('');
+
+  const years50: string[] = generateYears();
+
+  // Function to handle changes in the selected year
+  const handleYearSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setYearRange(e.target.value);
+  };
 
   const tabs = ["Manage Closure Date", "Manage Accounts", "Statistical Analysis", "Profile"];
   const [activeTab, setActiveTab] = useState(() => {
@@ -85,7 +100,6 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
   useEffect(() => {
     fetchProfileData();
-    getAcademicYear();
     getAllUser();
     getAllRole();
     getAllFaculty();
@@ -110,8 +124,30 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     fetchDataChart(selectedYear);
   }
 
-  const handleEditModeToggle = () => {
-    setEditMode((prevEditMode) => !prevEditMode);
+  const handleCreateYear = () => {
+    setCreateYearMode(true);
+  };
+
+  const handleStopCreateYear = async (academic_year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/academicyear/createAcedemicYear/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          academic_year: academic_year,
+        })
+      });
+      if (response.ok) {
+        setCreateYearMode(false);
+        getAllAcademicYear();
+      } else if (response.status === 409) {
+        setNotification({ type: "error", message: "This year already exists." });
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
 
   const handleLogout = () => {
@@ -138,9 +174,41 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     setEditingRowIndex(index);
   };
 
+  const handleEditYear = (index: number) => {
+    setEditingYearIndex(index);
+  };
+
   const handleStopEditRole = (user_id: string, password: string, facultyName: string, roleName: string) => {
     setEditingRowIndex(null);
     updateAccountRole(user_id, password, facultyName, roleName);
+  };
+
+  const handleClosureDateChange = (closureDate: string, index: number) => {
+    setAcademicYearsAR(prevAcademicYearsAR => {
+      const updatedAcademicYearAr = [...prevAcademicYearsAR];
+      const closureDateToUpdate = updatedAcademicYearAr[index];
+      if (closureDateToUpdate) {
+        updatedAcademicYearAr[index] = {
+          ...closureDateToUpdate,
+          closure_date: closureDate,
+        };
+      }
+      return updatedAcademicYearAr;
+    });
+  };
+
+  const handleFinalClosureDateChange = (finalClosureDate: string, index: number) => {
+    setAcademicYearsAR(prevAcademicYearsAR => {
+      const updatedAcademicYearAr = [...prevAcademicYearsAR];
+      const finalClosureDateToUpdate = updatedAcademicYearAr[index];
+      if (finalClosureDateToUpdate) {
+        updatedAcademicYearAr[index] = {
+          ...finalClosureDateToUpdate,
+          final_closure_date: finalClosureDate,
+        };
+      }
+      return updatedAcademicYearAr;
+    });
   };
 
   const handleRoleChange = (roleName: string, index: number) => {
@@ -243,14 +311,54 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-  const formatDateToString = (date: Date) => {
+  const handleDeleteAcademicYear = async (year: AcademicYear) => {
+    // Display an alert to confirm deletion
+    if (window.confirm(`Are you sure you want to delete academic year ${year.academic_year}?`)) {
+      try {
+        const response = await fetch(`${urlBackend}/academicyear/deleteYear/${year.academic_year_id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          getAllAcademicYear();
+        }
+      } catch (error) {
+        console.error("Error fetching academic year data:", error);
+      }
+      console.log(`Deleting academic year ${year.academic_year}...`);
+    } else {
+      console.log("Deletion cancelled.");
+    }
+  }
+  const formatDate = (dateString: string) => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    let hours = date.getHours();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 12 hours should be displayed as 12, not 0
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    const dayOfWeek = daysOfWeek[date.getDay()];
+    return `${dayOfWeek} ${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${ampm}`;
+  };
+
+
+  const formatStringToDateTimeLocal = (dateTimeString: string) => {
+    const date = new Date(dateTimeString);
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+  }
+
 
   const updateAccountRole = async (user_id: string, password: string, faculty_name: string, role_name: string) => {
     try {
@@ -505,51 +613,32 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-  const getAcademicYear = async () => {
+  const handleStopEditYear = async (closure_date: string, final_closure_date: string, year: AcademicYear) => {
     try {
-      const currentYear = new Date().getFullYear();
-      const response = await fetch(`${urlBackend}/academicyear/getAcademicYearByYear/${currentYear}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setClosureDate(new Date(data.closure_date));
-        setFinalClosureDate(new Date(data.final_closure_date));
-        setAcademicYears(data);
-      }
-    } catch (error) {
-      console.error("Error fetching profile data:", error);
-    }
-  }
-
-  const handleSaveDates = async () => {
-    try {
+      const closureDate = new Date(closure_date);
+      const finalClosureDate = new Date(final_closure_date);
       if (finalClosureDate < closureDate) {
         setNotification({ type: "error", message: "Final closure date must be equal to or greater than the closure date." });
-        return;
-      }
-
-      const response = await fetch(`${urlBackend}/academicyear/updateAcadamicYear`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          academic_year_id: academicYears?.academic_year_id,
-          closure_date: closureDate,
-          final_closure_date: finalClosureDate,
-        }),
-      });
-      if (response.ok) {
-        setEditMode(false);
-        getAcademicYear();
-        setNotification({ type: "success", message: "Dates saved successfully." });
       } else {
-        setNotification({ type: "error", message: "Failed to save dates." });
-        getAcademicYear();
+
+        const response = await fetch(`${urlBackend}/academicyear/updateAcadamicYear`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            academic_year_id: academicYears?.academic_year_id,
+            closure_date: closureDate,
+            final_closure_date: finalClosureDate,
+          }),
+        });
+        if (response.ok) {
+          setEditingYearIndex(null);
+          getAllAcademicYear();
+          setNotification({ type: "success", message: "Dates saved successfully." });
+        } else {
+          setNotification({ type: "error", message: "Failed to save dates." });
+        }
       }
     } catch (error) {
       console.error("Error saving dates:", error);
@@ -712,70 +801,175 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       {notification.message}
                     </div>
                   )}
-                  <div className="flex justify-end mb-4">
-                    {editMode ? (
+                  {createYearMode ? (
+                    <div>
+                      <div className="flex justify-end mb-4">
+                        <label className="p-2 mr-2text-center">Select Year To Create:</label>
+                        <select
+                          className="mr-2 p-2 border rounded border-gray"
+                          value={yearRange}
+                          onChange={handleYearSelectChange}
+                        >
+                          {years50.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+                          onClick={() => handleStopCreateYear(yearRange || '2000')}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end mb-4">
                       <button
                         className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                        onClick={handleSaveDates}
+                        onClick={handleCreateYear}
                       >
-                        Save Changes
+                        Create New Academic Year
                       </button>
-                    ) :
-                      <button
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                        onClick={handleEditModeToggle}
-                      >
-                        Edit Date
-                      </button>
-                    }
-                  </div>
-                  <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="bg-white rounded-lg p-6 shadow-md">
-                      <p className="text-lg font-semibold mb-2">Academic Year:</p>
-                      <p className="text-xl">2024-2025</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 shadow-md">
-                      <p className="text-lg font-semibold mb-2">Closure Date:</p>
-                      {editMode ? (
-                        <div className="relative">
-                          <input
-                            type="datetime-local"
-                            className="w-full bg-gray-100 border rounded p-2"
-                            value={formatDateToString(closureDate)}
-                            onChange={(e) => setClosureDate(new Date(e.target.value))}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <div className="w-full">
-                            <p className="text-xl">
-                              {closureDate.toDateString()} {closureDate.toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="bg-white rounded-lg p-6 shadow-md">
-                      <p className="text-lg font-semibold mb-2">Final Closure Date:</p>
-                      {editMode ? (
-                        <div className="relative">
-                          <input
-                            type="datetime-local"
-                            className="w-full bg-gray-100 border rounded p-2"
-                            value={formatDateToString(finalClosureDate)}
-                            onChange={(e) => setFinalClosureDate(new Date(e.target.value))}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <div className="w-full">
-                            <p className="text-xl">
-                              {finalClosureDate.toDateString()} {finalClosureDate.toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                  )}
+                  <div className="mt-8">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Academic Year
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Closure Date
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Final Closure Date
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {academicYearsAR.map((year, index) => (
+                          <tr key={index}>
+                            <td className="px-6 py-4 text-center border-b border-gray-300">
+                              <div className="text-sm text-gray-900">{year.academic_year}</div>
+                            </td>
+                            <td className="px-6 py-4 text-center border-b border-gray-300">
+                              <div className="text-sm text-gray-900">
+                                {editingYearIndex === index ? (
+                                  <div className="relative">
+                                    <input
+                                      type="datetime-local"
+                                      className="w-full bg-gray-100 border rounded p-2 text-center"
+                                      value={formatStringToDateTimeLocal(year.closure_date)}
+                                      onChange={(e) => handleClosureDateChange(new Date(e.target.value).toISOString(), index)}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center items-center">
+                                    <div className="w-full text-center">
+                                      {formatDate(year.closure_date)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-center border-b border-gray-300">
+                              <div className="text-sm text-gray-900">
+                                {editingYearIndex === index ? (
+                                  <div className="relative">
+                                    <input
+                                      type="datetime-local"
+                                      className="w-full bg-gray-100 border rounded p-2 text-center"
+                                      value={formatStringToDateTimeLocal(year.final_closure_date)}
+                                      onChange={(e) => handleFinalClosureDateChange(new Date(e.target.value).toISOString(), index)}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center items-center">
+                                    <div className="w-full text-center">
+                                      {formatDate(year.final_closure_date)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                              {editingYearIndex === index ? (
+                                <button
+                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900 p-1"
+                                  onClick={() => handleStopEditYear(year.closure_date, year.final_closure_date, year)}
+                                >
+                                  <svg
+                                    className="w-5 h-5 mt-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                </button>
+                              ) : (
+                                <div className="flex justify-center items-center">
+                                  <div>
+                                    <div className="flex space-x-2">
+                                      <button
+                                        className="text-green-600 hover:text-green-900 p-1"
+                                        onClick={() => handleEditYear(index)}
+                                      >
+                                        <svg
+                                          className="w-5 h-5 mt-2"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                          />
+                                        </svg>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteAcademicYear(year)}
+                                        className="text-red-600 hover:text-red-900 focus:outline-none"
+                                      >
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          className="h-6 w-6"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M6 18L18 6M6 6l12 12"
+                                          />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -887,12 +1081,12 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                   <div className="overflow-x-auto">
                     {notification && (
                       <div
-                        className={` my-2 text-sm rounded-md ${notification.type === "error"
+                        className={`my-2 text-sm rounded-md ${notification.type === "error"
                           ? "bg-red-100 border border-red-300 text-red-900 p-3"
                           : notification.type === "warning"
-                            ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                            ? "bg-yellow-100 border border-yellow-300 text-yellow-900 p-3"
                             : notification.type === "success"
-                              ? "bg-green-100 border border-green-300 text-green-900"
+                              ? "bg-green-100 border border-green-300 text-green-900 p-3"
                               : ""
                           }`}
                       >
@@ -912,8 +1106,8 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       <tbody>
                         {userList.map((user, index) => (
                           <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="px-4 py-2 text-center">{user.username}</td>
-                            <td className="px-4 py-2 text-center">
+                            <td className="px-4 py-2 text-center border-b border-gray-300">{user.username}</td>
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <input
                                   type="text"
@@ -925,7 +1119,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 user.password
                               )}
                             </td>
-                            <td className="px-4 py-2 text-center">
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <select
                                   value={user.faculty.faculty_name}
@@ -940,7 +1134,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 user.faculty.faculty_name
                               )}
                             </td>
-                            <td className="px-4 py-2 text-center">
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <select
                                   value={user.role.role_name}
@@ -955,11 +1149,11 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 user.role.role_name
                               )}
                             </td>
-                            <td className="px-4 py-2 text-center">
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <button
                                   onClick={() => handleStopEditRole(user.user_id, user.password, user.faculty.faculty_name, user.role.role_name)}
-                                  className="mr-2 text-red-600 hover:text-red-900 focus:outline-none"
+                                  className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
                                 >
                                   <svg
                                     className="w-5 h-5 mt-2"
