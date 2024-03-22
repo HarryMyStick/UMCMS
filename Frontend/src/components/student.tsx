@@ -126,21 +126,21 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     if (currentAcademicYear) {
       const final_closure_date = new Date(currentAcademicYear?.final_closure_date);
       const currentDate = new Date();
-        if (currentDate > final_closure_date) {
-          setNotification({ type: "error", message: "The final deadline for edit contribution is end. Thanks for your contributions!!" });
-        } else {
-          setEditingContribution({
-            contribution_id: contribution.sc_contribution_id,
-            title: contribution.sc_article_title,
-            description: contribution.sc_article_description,
-            urlImage: contribution.sc_image_url,
-            urlWord: contribution.sc_article_content_url,
-          });
-        }
+      if (currentDate > final_closure_date) {
+        setNotification({ type: "error", message: "The final deadline for edit contribution is end. Thanks for your contributions!!" });
       } else {
-        getAcademicYearByYear();
-        handleEdit(contribution);
+        setEditingContribution({
+          contribution_id: contribution.sc_contribution_id,
+          title: contribution.sc_article_title,
+          description: contribution.sc_article_description,
+          urlImage: contribution.sc_image_url,
+          urlWord: contribution.sc_article_content_url,
+        });
       }
+    } else {
+      getAcademicYearByYear();
+      handleEdit(contribution);
+    }
   };
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,19 +173,25 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         if (currentDate > closureDate) {
           setNotification({ type: "error", message: "Time to contribute to the magazine is end. Thanks for your contributions!" })
         } else {
-          await fetchUploadData();
-          setAgree(false);
           getFacultyByUserId();
           getMkProfile();
-          const currentTime = new Date();
-          const formattedTime = currentTime.toLocaleString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-          });
-          sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+          if (mkEmail) {
+            await fetchUploadData();
+            setAgree(false);
+            const currentTime = new Date();
+            const formattedTime = currentTime.toLocaleString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+            });
+            sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+          } else {
+            getFacultyByUserId();
+            getMkProfile();
+            setNotification({ type: "error", message: "Please contact with your marketing coordinator to update his email or try again later." });
+          }
         }
       } else {
         getAcademicYearByYear();
@@ -420,6 +426,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   }
 
   const getMkProfile = async () => {
+    console.log("MK called");
     try {
       const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
         method: "POST",
@@ -430,6 +437,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (response.ok) {
         const data = await response.json();
         setMkEmail(data.email);
+        console.log(data);
       }
     } catch (error) {
       console.error(error);
@@ -782,6 +790,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           const dataFormImage = new FormData();
           dataFormImage.append("contribution_id", contributionId);
           dataFormImage.append("imageFile", imageFile as Blob);
+          setNotification({ type: "success", message: "Submit Contribution Success" });
 
           const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
             method: "POST",
