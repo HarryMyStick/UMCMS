@@ -64,6 +64,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [currentAcademicYear, setCurrentAcademicYear] = useState<AcademicYear>();
   const [userFacultyName, setUserFacultyName] = useState("");
   const [mkEmail, setMkEmail] = useState("");
+  const [agreeTerm, setAgreeTerm] = useState(false);
 
   const title = useRef<HTMLInputElement>(null);
   const description = useRef<HTMLInputElement>(null);
@@ -145,6 +146,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const handleAgreeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAgree(e.target.checked);
+  };
+
+  const handleRead = () => {
+    setAgreeTerm(true);
+  };
+
+  const handleStopRead = () => {
+    setAgreeTerm(false);
   };
 
   const displayMessage = (type: any, message: any) => {
@@ -1114,16 +1123,69 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                               </div>
                             </div>
                             <div className="relative mb-3 w-full">
-                              <label className="inline-flex items-center mt-3">
-                                <input
-                                  type="checkbox"
-                                  className="form-checkbox h-5 w-5 text-gray-600"
-                                  checked={agree}
-                                  onChange={handleAgreeChange}
-                                  disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
-                                />
-                                <span className="ml-2 text-gray-700">You can only submit Word files and PNG images, and please ensure that you are the author of the submitted content.</span>
-                              </label>
+                              {agreeTerm ? (
+                                <div>
+                                  <p onClick={handleStopRead}>
+                                    Close Term And Polices
+                                  </p>
+                                  <div className="terms-container bg-gray-100 border border-gray-300 rounded-lg p-6 my-6">
+                                    <ol className="list-decimal pl-6">
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Accepted File Types:</strong> We only accept Word files (.docx) and PNG images (.png) for submission.
+                                        </p>
+                                      </li>
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Ownership of Content:</strong> You must ensure that you are the author and owner of the submitted content. Plagiarism or submitting content without proper authorization is strictly prohibited.
+                                        </p>
+                                      </li>
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Use of Submitted Content:</strong> By submitting a file, you grant us the non-exclusive right to use, reproduce, and distribute the content for the purpose of evaluating submissions and improving our services.
+                                        </p>
+                                      </li>
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Accuracy of Information:</strong> You are responsible for the accuracy and legality of the content you submit. Any misleading or fraudulent information will result in the rejection of your submission and may lead to further actions.
+                                        </p>
+                                      </li>
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Compliance with Laws:</strong> You must comply with all applicable laws and regulations when submitting content. This includes but is not limited to copyright laws, privacy laws, and laws governing the distribution of sensitive information.
+                                        </p>
+                                      </li>
+                                      <li className="mb-4">
+                                        <p>
+                                          <strong>Indemnification:</strong> You agree to indemnify and hold harmless our organization, its affiliates, and employees from any claims, damages, or liabilities arising out of your submission or violation of these terms and policies.
+                                        </p>
+                                      </li>
+                                      <li>
+                                        <p>
+                                          <strong>Modification of Terms:</strong> We reserve the right to modify these terms and policies at any time without prior notice. It is your responsibility to review these terms periodically for any changes.
+                                        </p>
+                                      </li>
+                                    </ol>
+
+                                    <label className="inline-flex items-center mt-3">
+                                      <input
+                                        type="checkbox"
+                                        className="form-checkbox h-5 w-5 text-gray-600"
+                                        checked={agree}
+                                        onChange={handleAgreeChange}
+                                        disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                      /><p className="pl-2">Agree to term and policies</p>
+                                    </label>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p onClick={handleRead}>
+                                    Read Term And Polices
+                                  </p>
+                                </div>
+                              )}
+
                             </div>
                           </div>
                         </div>
