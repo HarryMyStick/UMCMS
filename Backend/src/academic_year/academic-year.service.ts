@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AcademicYear } from './models/entities/academic-year.entity';
 import { Repository } from 'typeorm';
@@ -19,12 +19,12 @@ export class AcademicYearService {
     });
 
     if (existingYear) {
-      return existingYear;
+      throw new ConflictException('Academic year already exists');;
+    } else {
+      const academicYear = this.academicYearRepository.create(createAcademicYearDto);
+      await academicYear.save();
+      return academicYear;
     }
-
-    const academicYear = this.academicYearRepository.create(createAcademicYearDto);
-    await academicYear.save();
-    return academicYear;
   }
 
   async getAcademicYearByYear(year: string): Promise<AcademicYear> {
@@ -56,5 +56,15 @@ export class AcademicYearService {
 
     await this.academicYearRepository.save(academicYear);
     return academicYear;
+  }
+
+  async deleteYear(academic_year_id: string): Promise<void> {
+    const academic_year = await this.academicYearRepository.findOne({
+      where: [{ academic_year_id: academic_year_id }],
+    });
+    if (!academic_year) {
+      throw new NotFoundException('Academic year not found');
+    }
+    await this.academicYearRepository.remove(academic_year);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './models/entities/user.entity';
 import { Repository } from 'typeorm';
@@ -32,7 +32,7 @@ export class UsersService {
     });
 
     if (existingUser) {
-      return existingUser;
+      throw new ConflictException('user already exists');;
     }
 
     const faculty = await this.facultyService.getFacultyByName(createUserDto.faculty_name);
