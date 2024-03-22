@@ -816,7 +816,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   return (
     <div className="flex flex-col bg_white">
-      <Chat userId={userId} role="Student" />
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
         <nav className="flex flex-row items-center justify-between p-3">
           <div className="flex items-center justify-between">
@@ -1651,6 +1650,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         ))
         }
       </div >
+      <Chat userId={userId} role="Student" />
     </div >
   );
 };
