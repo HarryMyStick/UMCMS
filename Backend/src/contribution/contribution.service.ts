@@ -132,7 +132,7 @@ export class ContributionService {
       .innerJoin('u.faculty', 'f')
       .innerJoin('profile', 'p', 'p.user_id = u.user_id')
       .where('f.faculty_name = :facultyName', { facultyName })
-      .andWhere('sc.status IN (:...statuses)', { statuses: ['Approved', 'Published'] }) 
+      .andWhere('sc.status IN (:...statuses)', { statuses: ['Approved', 'Published'] })
       .addSelect(['sc', 'sc.user_id'])
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
@@ -265,6 +265,17 @@ export class ContributionService {
       .getRawMany();
   }
 
+  async getAllContributions(): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
   async getPublishContributionsByYear(year: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
@@ -274,6 +285,19 @@ export class ContributionService {
       .innerJoin('sc.academic_year_id', 'ay')
       .where('ay.academic_year = :academicYear', { academicYear: year })
       .andWhere('sc.status = :status', { status: 'Published' })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
+  async getAllContributionsByYear(year: string): Promise<Contribution[]> {
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .innerJoin('sc.academic_year_id', 'ay')
+      .where('ay.academic_year = :academicYear', { academicYear: year })
       .addSelect(['sc', 'sc.user_id'])
       .addSelect(['sc', 'p.first_name', 'p.last_name'])
       .getRawMany();
@@ -320,7 +344,7 @@ export class ContributionService {
         .orderBy('academic_year.academic_year')
         .addOrderBy('faculty.faculty_name')
         .getRawMany();
-  
+
       return statistics;
     } catch (error) {
       throw new Error(`Unable to fetch contributor statistics: ${error.message}`);

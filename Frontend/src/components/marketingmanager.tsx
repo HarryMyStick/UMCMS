@@ -55,7 +55,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
   const [editedYearManage, setEditedYearManage] = useState("");
 
 
-  const tabs = ["Home", "Manage Contribution","Profile"];
+  const tabs = ["Home", "Manage Contribution", "Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
     const tabsLength = tabs.length;
@@ -73,12 +73,12 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     if ((editedYear === "default") || (editedYear === "")) {
       showAllMagazine();
     } else {
-      showAllMagazineByFacultyAndYear(editedYear);
+      showAllMagazineByYear(editedYear);
     }
     if ((editedYearManage === "default") || (editedYearManage === "")) {
       showMagazineOfStudent();
     } else {
-      showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
+      showAllMagazineByYearNonPublish(editedYearManage);
     }
     fetchProfileData();
     getAcademicYear();
@@ -92,7 +92,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     if ((year === "default") || (year === "")) {
       showAllMagazine();
     } else {
-      showAllMagazineByFacultyAndYear(year);
+      showAllMagazineByYear(year);
     }
   }
 
@@ -100,7 +100,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     if ((year === "default") || (year === "")) {
       showMagazineOfStudent();
     } else {
-      showAllMagazineByFacultyAndYearNonPublish(year);
+      showAllMagazineByYearNonPublish(year);
     }
   }
 
@@ -195,102 +195,77 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
 
   const showMagazineOfStudent = async () => {
     try {
-      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
-        method: "GET",
+      const response = await fetch(`${urlBackend}/contribution/getAllContributions/`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameApprove/${facultyName}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          }
-        });
-
-        if (getMagazineResponse.ok) {
-          const magazineData = await getMagazineResponse.json();
-          for (const magazine of magazineData) {
-            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              }
-            });
-
-            if (getImageResponse.ok) {
-              const imageUrl = await getImageResponse.text();
-              magazine.sc_image_url = imageUrl;
-            }
-          }
-          setMagazines(magazineData);
-          console.log('set magazine student');
-        } else {
-          console.log("Magazine cannot loading.");
-          return;
         }
+      });
+
+      if (response.ok) {
+        const magazineData = await response.json();
+        for (const magazine of magazineData) {
+          const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            }
+          });
+
+          if (getImageResponse.ok) {
+            const imageUrl = await getImageResponse.text();
+            magazine.sc_image_url = imageUrl;
+          }
+        }
+        setMagazines(magazineData);
+        console.log('set magazine student');
       } else {
-        console.error("Cannot get faculty by user_id.");
+        console.log("Magazine cannot loading.");
+        return;
       }
     } catch (error) {
       console.error("Error fetching profile data:", error);
     }
   };
 
-  const showAllMagazineByFacultyAndYearNonPublish = async (year: string) => {
+  const showAllMagazineByYearNonPublish = async (year: string) => {
     try {
-      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
-        method: "GET",
+      const response = await fetch(`${urlBackend}/contribution/getAllContributionsByYear`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          year: year,
+        }),
       });
+
       if (response.ok) {
-        const data = await response.json();
-        const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            faculty_name: facultyName,
-            year: year,
-          }),
-        });
-
-        if (getMagazineResponse.ok) {
-          const magazineData = await getMagazineResponse.json();
-          for (const magazine of magazineData) {
-            const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              }
-            });
-
-            if (getImageResponse.ok) {
-              const imageUrl = await getImageResponse.text();
-              magazine.sc_image_url = imageUrl;
+        const magazineData = await response.json();
+        for (const magazine of magazineData) {
+          const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
             }
+          });
+
+          if (getImageResponse.ok) {
+            const imageUrl = await getImageResponse.text();
+            magazine.sc_image_url = imageUrl;
           }
-          setMagazines(magazineData);
-        } else {
-          console.log("Magazine cannot loading.");
-          return;
         }
+        setMagazines(magazineData);
       } else {
-        console.log("Cannot get faculty by user_id.");
+        console.log("Magazine cannot loading.");
+        return;
       }
     } catch (error) {
       console.error("Error fetching profile data:", error);
     }
   };
 
-  const showAllMagazineByFacultyAndYear = async (year: string) => {
+  const showAllMagazineByYear = async (year: string) => {
     try {
       const getMagazineResponse = await fetch(`${urlBackend}/contribution/getPublishContributionsByYear`, {
         method: "POST",
