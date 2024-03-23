@@ -63,7 +63,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [contributionIdIndex, setContributionIdIndex] = useState("");
   const [currentAcademicYear, setCurrentAcademicYear] = useState<AcademicYear>();
   const [userFacultyName, setUserFacultyName] = useState("");
-  const [mkEmail, setMkEmail] = useState("");
   const [agreeTerm, setAgreeTerm] = useState(false);
 
   const title = useRef<HTMLInputElement>(null);
@@ -102,17 +101,19 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     } else {
       showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
     }
+    initData();
+  }, []);
+
+  const initData = () => {
     fetchProfileData();
     getAllAcademicYear();
     getAcademicYearByYear();
     getFacultyByUserId();
-    getMkProfile();
-  }, []);
+  }
 
   const handleLogout = () => {
-    // Implement your logout functionality here
-    // For example, clearing local storage or session
-    router.push("/login"); // Redirect to login page after logout
+    localStorage.removeItem('sessionId');
+    router.push("/login");
   };
 
   const handleChangeYear = (year: string) => {
@@ -175,7 +176,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-
+      initData();
       if (currentAcademicYear) {
         const currentDate = new Date();
         const closureDate = new Date(currentAcademicYear?.closure_date);
@@ -183,26 +184,35 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           setNotification({ type: "error", message: "Time to contribute to the magazine is end. Thanks for your contributions!" })
         } else {
           getFacultyByUserId();
-          getMkProfile();
-          if (mkEmail) {
-            await fetchUploadData();
-            setAgree(false);
-            const currentTime = new Date();
-            const formattedTime = currentTime.toLocaleString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
+          try {
+            const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
             });
-            sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
-          } else {
-            getFacultyByUserId();
-            getMkProfile();
-            setNotification({ type: "error", message: "Please contact with your marketing coordinator to update his email or try again later." });
+            if (response.ok) {
+              const data = await response.json();
+              await fetchUploadData();
+              setAgree(false);
+              const currentTime = new Date();
+              const formattedTime = currentTime.toLocaleString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              });
+              sendEmail(data.email, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+            } else {
+              setNotification({ type: "error", message: "Please contact with your marketing coordinator to update his email or try again later." });
+            }
+          } catch (error) {
+            console.error(error);
           }
         }
       } else {
+        initData();
         getAcademicYearByYear();
         handleSentFile();
       }
@@ -432,25 +442,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-  const getMkProfile = async () => {
-    console.log("MK called");
-    try {
-      const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setMkEmail(data.email);
-        console.log(data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   const showMagazineOfStudent = async () => {
     try {
       const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
@@ -462,7 +453,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (response.ok) {
         const data = await response.json();
         const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyName/${facultyName}`, {
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionViaUserId/${userId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -508,7 +499,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (response.ok) {
         const data = await response.json();
         const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameByYearByUserId`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -516,6 +507,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           body: JSON.stringify({
             faculty_name: facultyName,
             year: year,
+            user_id: userId,
           }),
         });
 

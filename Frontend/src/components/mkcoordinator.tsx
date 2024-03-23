@@ -28,6 +28,7 @@ interface Magazine {
   sc_image_url: string;
   p_first_name: string;
   p_last_name: string;
+  sc_submission_date: string;
 }
 
 interface AcademicYear {
@@ -90,9 +91,16 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
     sessionStorage.setItem("activeTabIndex", activeTab.toString());
   }, [activeTab]);
 
-  const openCommentPopup = (contributionId: string) => {
-    setContributionIdIndex(contributionId);
-    setIsCommentOpen(true);
+  const openCommentPopup = (contribution: Magazine) => {
+    const currentDate = new Date();
+    const subDate = new Date(contribution.sc_submission_date);
+    const contributionId = contribution.sc_contribution_id;
+    if ((currentDate.getTime() - subDate.getTime()) > (14 * 24 * 60 * 60 * 1000)) {
+      setNotification({type:"error", message:"You cannot comment anymore because its over 14 days since this contribution be submited!!"});
+    } else {
+      setContributionIdIndex(contributionId);
+      setIsCommentOpen(true);
+    }
   };
 
   const closeCommentPopup = () => {
@@ -742,7 +750,7 @@ const Mkcoordinator: React.FC<NavProps> = ({ userId, role_name }) => {
                             )}
                           </td>
                           <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
-                            <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
+                            <button onClick={() => openCommentPopup(magazine)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium border-b border-gray-300">
                             <button

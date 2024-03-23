@@ -32,6 +32,9 @@ export class Contribution extends BaseEntity {
   @Column({ default: "default" })
   image_url: string;
 
+  @Column({ default: "not comment" })
+  comment: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   submission_date: Date;
 

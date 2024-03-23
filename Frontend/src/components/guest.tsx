@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
+import Chart from 'chart.js/auto';
 
 interface NavProps {
   userId: string;
@@ -45,17 +46,19 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedYear, setEditedYear] = useState("");
 
+  const [editedYearStat, setEditedYearStat] = useState("");
+
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
 
-  const tabs = ["Home", "Profile"];
+  const tabs = ["Home", "Statistical Analysis", "Profile"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
     const tabsLength = tabs.length;
     return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
-  
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       displayMessage("", "");
@@ -71,6 +74,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
     }
     fetchProfileData();
     getAcademicYear();
+    fetchDataChart('2024');
   }, []);
 
   useEffect(() => {
@@ -90,6 +94,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('sessionId');
     router.push("/login");
   };
 
@@ -100,6 +105,93 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
   const handleEditProfile = () => {
     setIsEditing(true);
   };
+
+  const handleYearChange = (selectedYear: string) => {
+    setEditedYearStat(selectedYear);
+    fetchDataChart(selectedYear);
+  }
+
+  const fetchDataChart = async (year: string) => {
+    try {
+      const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const faculty_name = data.faculty_name;
+
+        const contributionResponse = await fetch(`${urlBackend}/contribution/statisticContributionPerYearPerFaculty/${year}/${faculty_name}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (contributionResponse.ok) {
+          const contributionData = await contributionResponse.json();
+
+          // Extracting approved count and total count directly from the API response
+          const approvedCount = parseInt(contributionData.approvedcount);
+          const totalCount = parseInt(contributionData.totalcount);
+
+          // Calculating unapproved count
+          const unApprovedCount = totalCount - approvedCount;
+
+          const canvasContribution = document.getElementById("myChartCounts") as HTMLCanvasElement;
+
+          if (canvasContribution) {
+            Chart.getChart(canvasContribution)?.destroy();
+            new Chart(canvasContribution, {
+              type: 'bar',
+              data: {
+                labels: ['Total', 'Approved', 'Unapproved'],
+                datasets: [{
+                  label: 'Total Contribution',
+                  data: [totalCount, approvedCount, unApprovedCount],
+                  backgroundColor: [
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                  ],
+                  borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                  ],
+                  borderWidth: 1,
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    stacked: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  },
+                  x: {
+                    stacked: true
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'top',
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   const showAllMagazineByFacultyAndYear = async (year: string) => {
     try {
@@ -305,6 +397,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
+
   return (
     <div className="flex flex-col bg_white">
       <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
@@ -432,6 +525,57 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
               </div>
             )}
             {index === 1 && (
+              <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Statistical Analysis &gt;
+                    </p>
+                    <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">
+                      Statistic Chart<span className="bg-darkBlue"></span>
+                    </h1>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 mt-12 mb-12">
+                  <div className="flex justify-end mb-4">
+                    <select
+                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                      defaultValue={"default"}
+                      value={editedYearStat}
+                      onChange={(e) => {
+                        const selectedValue = e.target.value;
+                        setEditedYearStat(selectedValue);
+                        handleYearChange(selectedValue);
+                      }}
+                    >
+                      <option value="2024">All Year</option>
+                      {academicYears.map((year) => (
+                        <option key={year.academic_year_id} value={year.academic_year}>
+                          {year.academic_year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="container mx-auto px-4 py-8">
+                    <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                    <div className="grid grid-cols-1 gap-8">
+                      <div className="chart-container">
+                        <div className="flex justify-center">
+                          <div className="w-[800px] max-w-xl mx-auto">
+                            <canvas id="myChartCounts"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {index === 2 && (
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">

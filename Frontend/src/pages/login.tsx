@@ -26,31 +26,51 @@ export const Login: NextPage = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`${urlBackend}/users/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: fieldUsername,
-          password: fieldPassword,
-        }),
-      });
+    const existingSessionToken = localStorage.getItem("sessionId");
+    if (existingSessionToken) {
+      setErrorMessage("You are already logged in. Please logout from the existing account first.");
+    } else {
 
-      if (response.ok) {
-        const data = await response.json();
-        const userId = data.user_id;
-        await router.push({
-          pathname: "/dashboard",
-          query: { user_id: userId, role_name: data.role.role_name },
+      try {
+        const response = await fetch(`${urlBackend}/users/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: fieldUsername,
+            password: fieldPassword,
+          }),
         });
-      } else {
-        setErrorMessage("Invalid username or password.");
+
+        if (response.ok) {
+          const data = await response.json();
+          const getUserResponse = await fetch(`${urlBackend}/users/getUserByUsername/${fieldUsername}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          if (getUserResponse.ok) {
+            const dataUser = await getUserResponse.json();
+            const userId = dataUser.user_id;
+            const roleName = dataUser.role.role_name;
+            const { sessionId } = data; // Assuming the backend returns a session ID
+            localStorage.setItem("sessionId", sessionId);
+            await router.push({
+              pathname: "/dashboard",
+              query: { user_id: userId, role_name: roleName },
+            });
+          } else {
+            setErrorMessage("Cannot Get UserId.");
+          }
+        } else {
+          setErrorMessage("Invalid username or password.");
+        }
+      } catch (error) {
+        console.error("Error logging in:", error);
+        setErrorMessage("An error occurred while logging in.");
       }
-    } catch (error) {
-      console.error("Error logging in:", error);
-      setErrorMessage("An error occurred while logging in.");
     }
   };
 

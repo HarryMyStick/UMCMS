@@ -9,6 +9,7 @@ import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 import { FacultyModule } from 'src/faculty/faculty.module';
 import { Profile } from 'src/profile/models/entities/profile.entity';
 import { ProfileModule } from 'src/profile/profile.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -16,6 +17,10 @@ import { ProfileModule } from 'src/profile/profile.module';
     RoleModule,
     ProfileModule,
     FacultyModule,
+    JwtModule.register({
+      secret: 'b7e6da353033657fbf8c02ba5e96ce1360dd0ec0964f3c899d31e0e657757e3d',
+      signOptions: { expiresIn: '1h' }, // Optional: Define token expiration time
+    }),
   ],
   controllers: [UsersController],
   providers: [UsersService],

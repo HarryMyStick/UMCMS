@@ -19,6 +19,9 @@ export class CreateContributionDto {
   @IsOptional()
   image_url: string = 'default_image_url';
 
+  @IsOptional()
+  comment: string = 'not comment';
+
   @IsNotEmpty()
   submission_date: Date;
 

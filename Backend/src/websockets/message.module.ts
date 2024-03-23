@@ -15,10 +15,15 @@ import { ProfileService } from 'src/profile/profile.service';
 import { RoleService } from 'src/role/role.service';
 import { FacultyService } from 'src/faculty/faculty.service';
 import { MessageService } from './message.service';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
     imports: [
       TypeOrmModule.forFeature([User, Role, Profile, Faculty]), // Import UserRepository into TypeOrmModule
+      JwtModule.register({
+        secret: 'your-secret-key-here',
+        signOptions: { expiresIn: '1h' },
+      }),
     ],
     providers: [
       MessageGateway,
