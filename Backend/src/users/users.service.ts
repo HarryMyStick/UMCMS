@@ -11,6 +11,7 @@ import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
 import { Profile } from 'src/profile/models/entities/profile.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,7 @@ export class UsersService {
     private readonly profileService: ProfileService,
     private readonly facultyService: FacultyService,
     private readonly roleService: RoleService,
+    private jwtService: JwtService,
   ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -63,15 +65,20 @@ export class UsersService {
     return user;
   }
 
-  async login(createUserDto: CreateUserDto): Promise<User | undefined> {
+  async login(createUserDto: CreateUserDto): Promise<string> {
     const { username, password } = createUserDto;
 
-    const existingUser = await this.usersRepository.findOne({
+    const user = await this.usersRepository.findOne({
       where: { username, password },
       relations: ['role']
     });
 
-    return existingUser;
+    if (!user) {
+      throw new NotFoundException('Invalid username or password');
+    }
+
+    const payload = { username: user.username, sub: user.user_id };
+    return this.jwtService.sign(payload);
   }
 
   async getFacultyByUserId(userId: string): Promise<Faculty> {
@@ -94,6 +101,17 @@ export class UsersService {
   async getUserByUserId(userId: string): Promise<User> {
     const user = await this.usersRepository.findOne({
        where: { user_id: userId },
+      });
+    
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+  async getUserByUsername(username: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+       where: { username: username },
+       relations: ['role'],
       });
     
     if (!user) {

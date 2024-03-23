@@ -151,6 +151,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('sessionId');
     router.push("/login");
   };
 

@@ -1,9 +1,26 @@
 import { type AppType } from "next/dist/shared/lib/utils";
 import Head from "next/head";
+import { useEffect } from "react";
 
 import "~/styles/globals.css";
 
 const MyApp: AppType = ({ Component, pageProps }) => {
+  const clearLocalStorageOnClose = () => {
+    window.addEventListener('beforeunload', () => {
+      // Clear the session token from local storage
+      localStorage.removeItem('sessionId');
+    });
+  };
+
+  useEffect(() => {
+    // Call the function to set up the event listener
+    clearLocalStorageOnClose();
+
+    // Cleanup function to remove the event listener when the component unmounts
+    return () => {
+      window.removeEventListener('beforeunload', clearLocalStorageOnClose);
+    };
+  }, []);
   return (
     <>
       <Head>

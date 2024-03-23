@@ -12,6 +12,8 @@ import * as fs from 'fs';
 import { join } from 'path';
 import { ContributionYearFacDto } from './models/dto/contribution-year-fac.dto';
 import { UpdateContributionDto } from './models/dto/update-contribution.dto';
+import { ContributionYearFacUDto } from './models/dto/contribution-year-fac-u.dto';
+import { UpdateCommentDto } from './models/dto/update-comment.dto';
 
 @Injectable()
 export class ContributionService {
@@ -112,6 +114,24 @@ export class ContributionService {
       .getRawMany();
   }
 
+  async getContributionsByFacultyNameByYearByUserId(contributionYearFacUto: ContributionYearFacUDto): Promise<Contribution[]> {
+    const { faculty_name, year, user_id } = contributionYearFacUto;
+
+    return this.contributionRepository
+      .createQueryBuilder('sc')
+      .innerJoin('sc.user_id', 'u')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .innerJoin('sc.academic_year_id', 'ay')
+      .where('f.faculty_name = :facultyName', { facultyName: faculty_name })
+      .andWhere('sc.status <> :status', { status: 'Published' })
+      .andWhere('ay.academic_year = :academicYear', { academicYear: year })
+      .andWhere('u.user_id = :userId', { userId: user_id })
+      .addSelect(['sc', 'sc.user_id'])
+      .addSelect(['sc', 'p.first_name', 'p.last_name'])
+      .getRawMany();
+  }
+
   async getContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
@@ -152,10 +172,10 @@ export class ContributionService {
 
   async getContributionViaUserId(userId: string): Promise<Contribution[]> {
     return this.contributionRepository
-      .createQueryBuilder('contribution')
-      .leftJoinAndSelect('contribution.user_id', 'user')
+      .createQueryBuilder('sc')
+      .leftJoinAndSelect('sc.user_id', 'user')
       .where('user.user_id = :userId', { userId })
-      .getMany();
+      .getRawMany();
   }
 
   async updateContribution(updateContributionDto: UpdateContributionDto): Promise<Contribution> {
@@ -248,6 +268,20 @@ export class ContributionService {
       throw new NotFoundException('Contribution not found');
     }
     contribution.status = updateStatusDto.status;
+    const updatedContribution = await contribution.save();
+
+    return updatedContribution;
+  }
+
+  async updateComment(updateCommentDto: UpdateCommentDto): Promise<Contribution> {
+    const contribution = await this.contributionRepository.findOne({
+      where: [{ contribution_id: updateCommentDto.contribution_id }],
+    });
+
+    if (!contribution) {
+      throw new NotFoundException('Contribution not found');
+    }
+    contribution.comment = updateCommentDto.comment;
     const updatedContribution = await contribution.save();
 
     return updatedContribution;
@@ -348,6 +382,29 @@ export class ContributionService {
       return statistics;
     } catch (error) {
       throw new Error(`Unable to fetch contributor statistics: ${error.message}`);
+    }
+  }
+  
+  async statisticContributionPerYearPerFaculty(year: string, facultyName: string): Promise<any[]> {
+    try {
+      const statistics = await this.contributionRepository
+        .createQueryBuilder('contribution')
+        .select([
+          'faculty.faculty_name AS facultyName',
+          'COUNT(CASE WHEN contribution.status IN (:...statuses) THEN 1 ELSE NULL END) AS approvedCount',
+          'COUNT(contribution.contribution_id) AS totalCount',
+        ])
+        .innerJoin('contribution.user_id', 'user')
+        .innerJoin('user.faculty', 'faculty')
+        .innerJoin('contribution.academic_year_id', 'academic_year')
+        .where('faculty.faculty_name = :facultyName', { facultyName })
+        .andWhere('academic_year.academic_year = :year', { year })
+        .groupBy('faculty.faculty_name')
+        .setParameters({ statuses: ['Approved', 'Published'] })
+        .getRawOne();
+      return statistics;
+    } catch (error) {
+      throw new Error(`Unable to fetch contribution statistics: ${error.message}`);
     }
   }
 

@@ -19,8 +19,9 @@ export class UsersController {
   }
 
   @Post('login')
-  login(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.login(createUserDto);
+  async login(@Body() createUserDto: CreateUserDto): Promise<{ token: string }> {
+    const token = await this.usersService.login(createUserDto);
+    return { token };
   }
 
   @Get('getFacultyByUserId/:user_id')
@@ -36,6 +37,11 @@ export class UsersController {
   @Get('getUserByUserId/:user_id')
   async getUserByUserId(@Param('user_id') userId: string): Promise<User> {
     return this.usersService.getUserByUserId(userId);
+  }
+
+  @Get('getUserByUsername/:username')
+  async getUserByUsername(@Param('username') username: string): Promise<User> {
+    return this.usersService.getUserByUsername(username);
   }
 
   @Post('updateUser')
