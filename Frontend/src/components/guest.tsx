@@ -134,17 +134,41 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
         if (contributionResponse.ok) {
           const contributionData = await contributionResponse.json();
 
-          // Extracting approved count and total count directly from the API response
-          const approvedCount = parseInt(contributionData.approvedcount);
-          const totalCount = parseInt(contributionData.totalcount);
+          let chartElement = document.getElementById("myChartCounts");
 
-          // Calculating unapproved count
-          const unApprovedCount = totalCount - approvedCount;
+          if (contributionData.length === 0) {
+            // If contributionData is empty
+            if (chartElement) {
+              // If chart already exists, destroy it and change canvas to div (no data)
+              const chart = Chart.getChart(chartElement as HTMLCanvasElement);
+              if (chart) {
+                chart.destroy();
+              }
+              chartElement.outerHTML = '<div id="myChartCounts" class="text-2xl text-black" style="text-align: center;">There is no contributions be contribute this year!!</div>';
+            } else {
+              // If chart doesn't exist, change canvas to div (no data)
+              chartElement = document.createElement("div");
+              chartElement.id = "myChartCounts";
+              chartElement.style.textAlign = "center";
+              document.body.appendChild(chartElement);
+              chartElement.innerHTML = "No data";
+            }
+          } else {
+            // If contributionData is not empty
+            if (chartElement && chartElement.tagName.toLowerCase() === "div") {
+              // If div (no data) exists, replace it with canvas tag and show chart
+              const canvasContribution = document.createElement("canvas");
+              canvasContribution.id = "myChartCounts";
+              chartElement.replaceWith(canvasContribution);
+              chartElement = canvasContribution;
+            }
 
-          const canvasContribution = document.getElementById("myChartCounts") as HTMLCanvasElement;
+            // Render chart
+            const canvasContribution = chartElement as HTMLCanvasElement;
+            const approvedCount = parseInt(contributionData.approvedcount);
+            const totalCount = parseInt(contributionData.totalcount);
+            const unApprovedCount = totalCount - approvedCount;
 
-          if (canvasContribution) {
-            Chart.getChart(canvasContribution)?.destroy();
             new Chart(canvasContribution, {
               type: 'bar',
               data: {
@@ -561,7 +585,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                     </select>
                   </div>
                   <div className="container mx-auto px-4 py-8">
-                    <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                    <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYearStat === '' || editedYearStat === 'default' ? '2024' : editedYearStat}</h1>
                     <div className="grid grid-cols-1 gap-8">
                       <div className="chart-container">
                         <div className="flex justify-center">

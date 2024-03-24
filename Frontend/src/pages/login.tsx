@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { urlBackend } from "../global";
+import { MD5 } from "crypto-js";
 
 export const Login: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -20,6 +21,7 @@ export const Login: NextPage = () => {
   const logIn = async () => {
     const fieldUsername = username.current?.value.trim();
     const fieldPassword = password.current?.value.trim();
+    const hashPassword = fieldPassword ? MD5(fieldPassword).toString() : undefined;
 
     if (!fieldUsername || !fieldPassword) {
       setErrorMessage("Please enter username and password.");
@@ -39,7 +41,7 @@ export const Login: NextPage = () => {
           },
           body: JSON.stringify({
             username: fieldUsername,
-            password: fieldPassword,
+            password: hashPassword,
           }),
         });
 

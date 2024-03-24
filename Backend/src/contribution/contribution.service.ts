@@ -145,19 +145,6 @@ export class ContributionService {
       .getRawMany();
   }
 
-  async getContributionsByFacultyNameApprove(facultyName: string): Promise<Contribution[]> {
-    return this.contributionRepository
-      .createQueryBuilder('sc')
-      .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty', 'f')
-      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
-      .where('f.faculty_name = :facultyName', { facultyName })
-      .andWhere('sc.status IN (:...statuses)', { statuses: ['Approved', 'Published'] })
-      .addSelect(['sc', 'sc.user_id'])
-      .addSelect(['sc', 'p.first_name', 'p.last_name'])
-      .getRawMany();
-  }
-
   async getAllContributionsByFacultyName(facultyName: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
@@ -176,6 +163,17 @@ export class ContributionService {
       .leftJoinAndSelect('sc.user_id', 'user')
       .where('user.user_id = :userId', { userId })
       .getRawMany();
+  }
+
+  async getContributionByContributionId(contributionId: string): Promise<Contribution> {
+    const contribution = await this.contributionRepository.findOne({
+      where: { contribution_id: contributionId },
+    });
+
+    if (!contribution) {
+      throw new Error(`Contribution with id ${contributionId} not found`);
+    }
+    return contribution;
   }
 
   async updateContribution(updateContributionDto: UpdateContributionDto): Promise<Contribution> {
@@ -324,17 +322,60 @@ export class ContributionService {
       .getRawMany();
   }
 
-  async getAllContributionsByYear(year: string): Promise<Contribution[]> {
-    return this.contributionRepository
-      .createQueryBuilder('sc')
-      .innerJoin('sc.user_id', 'u')
-      .innerJoin('u.faculty', 'f')
-      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
-      .innerJoin('sc.academic_year_id', 'ay')
-      .where('ay.academic_year = :academicYear', { academicYear: year })
-      .addSelect(['sc', 'sc.user_id'])
-      .addSelect(['sc', 'p.first_name', 'p.last_name'])
-      .getRawMany();
+  async getAllContributionsByYear(year: string, faculty_name: string): Promise<Contribution[]> {
+    if ((year === "default") && (faculty_name !== "default")) {
+      const currentYear = new Date().getFullYear().toString();
+      return this.contributionRepository
+        .createQueryBuilder('sc')
+        .innerJoin('sc.user_id', 'u')
+        .innerJoin('u.faculty', 'f')
+        .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+        .innerJoin('sc.academic_year_id', 'ay')
+        .where('ay.academic_year = :academicYear', { academicYear: currentYear })
+        .andWhere('f.faculty_name = :facultyName', { facultyName: faculty_name })
+        .andWhere('(sc.status = :approved OR sc.status = :published)', { approved: "Approved", published: "Published" })
+        .addSelect(['sc', 'sc.user_id'])
+        .addSelect(['sc', 'p.first_name', 'p.last_name'])
+        .getRawMany();
+    } else if ((faculty_name === "default") && (year !== "default")) {
+      return this.contributionRepository
+        .createQueryBuilder('sc')
+        .innerJoin('sc.user_id', 'u')
+        .innerJoin('u.faculty', 'f')
+        .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+        .innerJoin('sc.academic_year_id', 'ay')
+        .where('ay.academic_year = :academicYear', { academicYear: year })
+        .andWhere('(sc.status = :approved OR sc.status = :published)', { approved: "Approved", published: "Published" })
+        .addSelect(['sc', 'sc.user_id'])
+        .addSelect(['sc', 'p.first_name', 'p.last_name'])
+        .getRawMany();
+    }else if(faculty_name !== "default" && year !=="default"){
+      return this.contributionRepository
+        .createQueryBuilder('sc')
+        .innerJoin('sc.user_id', 'u')
+        .innerJoin('u.faculty', 'f')
+        .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+        .innerJoin('sc.academic_year_id', 'ay')
+        .where('ay.academic_year = :academicYear', { academicYear: year })
+        .andWhere('f.faculty_name = :facultyName', { facultyName: faculty_name })
+        .andWhere('(sc.status = :approved OR sc.status = :published)', { approved: "Approved", published: "Published" })
+        .addSelect(['sc', 'sc.user_id'])
+        .addSelect(['sc', 'p.first_name', 'p.last_name'])
+        .getRawMany();
+    }else{
+      const currentYear = new Date().getFullYear().toString();
+      return this.contributionRepository
+        .createQueryBuilder('sc')
+        .innerJoin('sc.user_id', 'u')
+        .innerJoin('u.faculty', 'f')
+        .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+        .innerJoin('sc.academic_year_id', 'ay')
+        .where('ay.academic_year = :academicYear', { academicYear: currentYear })
+        .andWhere('(sc.status = :approved OR sc.status = :published)', { approved: "Approved", published: "Published" })
+        .addSelect(['sc', 'sc.user_id'])
+        .addSelect(['sc', 'p.first_name', 'p.last_name'])
+        .getRawMany();
+    }
   }
 
   async statisticContributionPerYear(year: string): Promise<any[]> {
@@ -384,7 +425,7 @@ export class ContributionService {
       throw new Error(`Unable to fetch contributor statistics: ${error.message}`);
     }
   }
-  
+
   async statisticContributionPerYearPerFaculty(year: string, facultyName: string): Promise<any[]> {
     try {
       const statistics = await this.contributionRepository

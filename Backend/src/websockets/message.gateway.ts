@@ -38,7 +38,11 @@ export class MessageGateway {
   @SubscribeMessage('join')
   joinRoom(@ConnectedSocket() client: Socket, @MessageBody('room') room: string) {
     this.messageService.joinRoom(room, client);
-    console.log("join room");
+  }
+
+  @SubscribeMessage('leave')
+  leaveRoom(@ConnectedSocket() client: Socket, @MessageBody('room') room: string) {
+    this.messageService.leaveRoom(room, client);
   }
 
   // @SubscribeMessage('typing')

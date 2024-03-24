@@ -7,11 +7,15 @@ import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
 import { Profile } from 'src/profile/models/entities/profile.entity';
+import { ProfileService } from 'src/profile/profile.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly profileService: ProfileService
+    ) { }
 
   @Post('register')
   createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
@@ -46,6 +50,7 @@ export class UsersController {
 
   @Post('updateUser')
   async updateUser(@Body() updateUserDto: UpdateRoleUserDto): Promise<User> {
+    await this.profileService.updateEmail(updateUserDto.profile_id, updateUserDto.email);
     return this.usersService.updateUser(updateUserDto);
   }
 
