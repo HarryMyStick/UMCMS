@@ -54,7 +54,22 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, rol
             });
             if (response.ok) {
                 const data = await response.json()
-                setComments(data);
+                if(data.length !== 0){
+                    setComments(data);
+                    const updateResponse = await fetch(`${urlBackend}/contribution/updateComment/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            contribution_id: contribution_id,
+                            comment: "commented",
+                        })
+                    });
+                    if(updateResponse.ok){
+                        console.log("update comment status success")
+                    }
+                }
             };
         } catch (error) {
             console.error('Error creating comment:', error);
@@ -97,11 +112,6 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, rol
         } catch (error) {
             console.error('Error deleting comment:', error);
         }
-    };
-
-    const startEdit = (commentId: string, commentContent: string) => {
-        setEditingCommentId(commentId);
-        setEditedCommentContent(commentContent);
     };
 
     const startEditStudentReply = (commentId: string, commentStudentReply: string) => {

@@ -17,26 +17,51 @@ export class ProfileService {
     profile.user = user;
     await profile.save();
     return profile;
-}
+  }
+
+  async adminCreateProfile(user: User, email: string): Promise<Profile> {
+    const profile = new Profile();
+    profile.user = user;
+    profile.email = email;
+    await profile.save();
+    return profile;
+  }
 
   async updateProfile(updateProfileDto: UpdateProfileDto): Promise<Profile> {
     const { profile_id, first_name, last_name, email, phone_number } = updateProfileDto;
-  
+
     let existingProfile = await this.profileRepository.findOne({
       where: { profile_id },
     });
-  
+
     if (!existingProfile) {
       throw new NotFoundException('Profile not found');
     }
-    
+
     existingProfile.first_name = first_name;
     existingProfile.last_name = last_name;
     existingProfile.email = email;
     existingProfile.phone_number = phone_number;
-  
+
     await this.profileRepository.save(existingProfile);
-  
+
+    return existingProfile;
+  }
+
+  async updateEmail(profile_id: string, email: string): Promise<Profile> {
+
+    let existingProfile = await this.profileRepository.findOne({
+      where: { profile_id },
+    });
+
+    if (!existingProfile) {
+      throw new NotFoundException('Profile not found');
+    }
+
+    existingProfile.email = email;
+
+    await this.profileRepository.save(existingProfile);
+
     return existingProfile;
   }
 
@@ -51,5 +76,5 @@ export class ProfileService {
 
     return profile;
   }
-  
+
 }

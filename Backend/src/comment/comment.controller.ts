@@ -18,7 +18,12 @@ export class CommentController {
 
   @Post('getCommentsByContribution/:contributionId')
   async getAllCommentsForContribution(@Param('contributionId') contributionId: string): Promise<Comment[]> {
-    return this.commentService.getAllCommentsForContribution(contributionId);
+    const data = this.commentService.getAllCommentsForContribution(contributionId);
+    if (!data || (await data).length === 0) {
+      return [];
+    }
+
+    return data;
   }
 
   @Post('updateComment')

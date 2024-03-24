@@ -13,4 +13,10 @@ export class UpdateRoleUserDto {
 
   @IsNotEmpty()
   role_name: string;
+
+  @IsNotEmpty()
+  email: string;
+
+  @IsNotEmpty()
+  profile_id: string;
 }

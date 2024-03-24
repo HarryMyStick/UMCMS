@@ -78,14 +78,14 @@ export class ContributionController {
     return this.contributionService.getContributionsByFacultyName(facultyName);
   }
 
-  @Get('getContributionsByFacultyNameApprove/:facultyName')
-  async getContributionsByFacultyNameApprove(@Param('facultyName') facultyName: string): Promise<Contribution[]> {
-    return this.contributionService.getContributionsByFacultyNameApprove(facultyName);
-  }
-
   @Get('getContributionViaUserId/:user_id')
   async getContributionViaUserId(@Param('user_id') user_id: string): Promise<Contribution[]> {
     return this.contributionService.getContributionViaUserId(user_id);
+  }
+
+  @Get('getContributionByContributionId/:contributionId')
+  async getContributionByContributionId(@Param('contributionId') contributionId: string): Promise<Contribution> {
+    return this.contributionService.getContributionByContributionId(contributionId);
   }
 
   @Post('updateContribution')
@@ -142,9 +142,12 @@ export class ContributionController {
     return this.contributionService.getAllContributions();
   }
 
-  @Post('getAllContributionsByYear')
-  async getAllContributionsByYear(@Body('year') year: string): Promise<Contribution[]> {
-    return this.contributionService.getAllContributionsByYear(year);
+  @Post('getAllContributionsByYear/:year/:faculty_name')
+  async getAllContributionsByYear(
+    @Param('year') year: string,
+    @Param('faculty_name') facultyName: string
+  ): Promise<Contribution[]> {
+    return this.contributionService.getAllContributionsByYear(year, facultyName);
   }
 
   @Post('getPublishContributionsByYear')
@@ -154,12 +157,24 @@ export class ContributionController {
 
   @Get('statisticContributionPerYear/:year')
   async statisticContributionPerYear(@Param('year') year: string): Promise<any[]> {
-    return this.contributionService.statisticContributionPerYear(year);
+    const data = await this.contributionService.statisticContributionPerYear(year);
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    return data;
   }
 
   @Get('statisticContributorsPerYear/:year')
   async statisticContributorsPerYear(@Param('year') year: string): Promise<any[]> {
-    return this.contributionService.statisticContributorsPerYear(year);
+    const data = await this.contributionService.statisticContributorsPerYear(year);
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    return data;
   }
 
   @Get('statisticContributionPerYearPerFaculty/:year/:faculty_name')
@@ -167,7 +182,13 @@ export class ContributionController {
     @Param('year') year: string,
     @Param('faculty_name') facultyName: string
   ): Promise<any[]> {
-    return this.contributionService.statisticContributionPerYearPerFaculty(year, facultyName);
+    const data = await this.contributionService.statisticContributionPerYearPerFaculty(year, facultyName);
+
+    if (!data || data.length === 0) {
+      return [];
+    }
+
+    return data;
   }
 
 }
