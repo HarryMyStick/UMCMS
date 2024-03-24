@@ -41,9 +41,6 @@ export class Contribution extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   edit_date: Date;
 
-  @Column({ default: true })
-  isEnable: boolean;
-
   @Column({ default: 'Pending' })
   status: string;
 
