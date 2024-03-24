@@ -33,6 +33,11 @@ interface AcademicYear {
   academic_year: string;
 }
 
+interface Faculty {
+  faculty_id: string;
+  faculty_name: string;
+}
+
 
 const MarketingManager: React.FC<NavProps> = ({ userId }) => {
   const router = useRouter();
@@ -48,11 +53,13 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
 
   const [publishMagazines, setPublishMagazines] = useState<Magazine[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
 
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editedStatus, setEditedStatus] = useState("");
   const [editedYearManage, setEditedYearManage] = useState("");
+  const [editedFacultyManage, setEditedFacultyManage] = useState("");
 
 
   const tabs = ["Home", "Manage Contribution", "Profile"];
@@ -75,13 +82,18 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     } else {
       showAllMagazineByYear(editedYear);
     }
-    if ((editedYearManage === "default") || (editedYearManage === "")) {
-      showMagazineOfStudent();
-    } else {
-      showAllMagazineByYearNonPublish(editedYearManage);
+    if ((editedYearManage === "default" || editedYearManage === "") && (editedFacultyManage === "default" || editedFacultyManage === "")) {
+      showAllMagazineByYearNonPublish("default", "default");
+    } else if ((editedYearManage === "default" || editedYearManage === "") && (editedFacultyManage !== "default" && editedFacultyManage !== "")) {
+      showAllMagazineByYearNonPublish("", editedFacultyManage);
+    } else if ((editedYearManage !== "default" && editedYearManage !== "") && (editedFacultyManage === "default" || editedFacultyManage === "")) {
+      showAllMagazineByYearNonPublish(editedYearManage, "");
+    } else if ((editedYearManage !== "default" && editedYearManage !== "") && (editedFacultyManage !== "default" && editedFacultyManage !== "")) {
+      showAllMagazineByYearNonPublish(editedYearManage, editedFacultyManage);
     }
     fetchProfileData();
     getAcademicYear();
+    getFaculty();
   }, []);
 
   useEffect(() => {
@@ -96,12 +108,18 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-  const handleChangeYearNonPublish = (year: string) => {
-    if ((year === "default") || (year === "")) {
-      showMagazineOfStudent();
-    } else {
-      showAllMagazineByYearNonPublish(year);
+  const handleChangeYearNonPublish = (year: string, faculty: string) => {
+    if ((year === "default" || year === "") && (faculty === "default" || faculty === "")) {
+      showAllMagazineByYearNonPublish("default", "default");
+    } else if ((year === "default" || year === "") && (faculty !== "default" && faculty !== "")) {
+      showAllMagazineByYearNonPublish("default", faculty);
+    } else if ((year !== "default" && year !== "") && (faculty === "default" || faculty === "")) {
+      showAllMagazineByYearNonPublish(year, "default");
+    } else if ((year !== "default" && year !== "") && (faculty !== "default" && faculty !== "")) {
+      showAllMagazineByYearNonPublish(year, faculty);
     }
+    console.log("year:", year);
+    console.log("fac:", faculty);
   }
 
   const handleSaveStatus = async (index: number, contributionId: string, contributionStatus: string) => {
@@ -120,7 +138,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
         if (response.ok) {
           displayMessage("success", "Change status successfully.");
           showAllMagazine();
-          showMagazineOfStudent();
+          showAllMagazineByYearNonPublish("default", "default");
           setEditingRowIndex(null);
           setEditedStatus("");
         } else {
@@ -146,7 +164,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     try {
       const zip = new JSZip();
       // Iterate over publishMagazines and fetch files associated with each magazine
-      for (const magazine of publishMagazines) {
+      for (const magazine of magazines) {
         const response = await fetch(`${urlBackend}/contribution/getFile/${magazine.sc_article_content_url}`, {
           method: "GET",
           headers: {
@@ -182,6 +200,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('sessionId');
     router.push("/login");
   };
 
@@ -193,51 +212,13 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
     setIsEditing(true);
   };
 
-  const showMagazineOfStudent = async () => {
+  const showAllMagazineByYearNonPublish = async (year: string, faculty_name: string) => {
     try {
-      const response = await fetch(`${urlBackend}/contribution/getAllContributions/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        }
-      });
-
-      if (response.ok) {
-        const magazineData = await response.json();
-        for (const magazine of magazineData) {
-          const getImageResponse = await fetch(`${urlBackend}/contribution/getImage/${magazine.sc_image_url}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            }
-          });
-
-          if (getImageResponse.ok) {
-            const imageUrl = await getImageResponse.text();
-            magazine.sc_image_url = imageUrl;
-          }
-        }
-        setMagazines(magazineData);
-        console.log('set magazine student');
-      } else {
-        console.log("Magazine cannot loading.");
-        return;
-      }
-    } catch (error) {
-      console.error("Error fetching profile data:", error);
-    }
-  };
-
-  const showAllMagazineByYearNonPublish = async (year: string) => {
-    try {
-      const response = await fetch(`${urlBackend}/contribution/getAllContributionsByYear`, {
+      const response = await fetch(`${urlBackend}/contribution/getAllContributionsByYear/${year}/${faculty_name}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          year: year,
-        }),
       });
 
       if (response.ok) {
@@ -255,6 +236,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
             magazine.sc_image_url = imageUrl;
           }
         }
+        setMagazines([]);
         setMagazines(magazineData);
       } else {
         console.log("Magazine cannot loading.");
@@ -336,6 +318,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
       console.error("Error fetching profile data:", error);
     }
   };
+
   const getAcademicYear = async () => {
     try {
       const response = await fetch(`${urlBackend}/academicyear/getAllAcademicYear`, {
@@ -349,7 +332,24 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
         setAcademicYears(academicYearData);
       }
     } catch (error) {
-      console.error("Error fetching profile data:", error);
+      console.error("Error fetching academic year data:", error);
+    }
+  }
+
+  const getFaculty = async () => {
+    try {
+      const response = await fetch(`${urlBackend}/faculty/getAllFaculty`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setFaculties(data);
+      }
+    } catch (error) {
+      console.error("Error fetching faculty data:", error);
     }
   }
 
@@ -537,14 +537,6 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                       ))}
                     </select>
                   </div>
-                  <div className="flex justify-end mb-4">
-                    <button
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={handleDownloadAllFiles}
-                    >
-                      Download All Files
-                    </button>
-                  </div>
                   <article>
                     <section className="mt-6 grid md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
                       {publishMagazines.map((publishMagazines) => (
@@ -615,24 +607,56 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                       {notification.message}
                     </div>
                   )}
+                  <div className="flex items-center justify-end mb-3">
+                    <div className="flex items-center">
+                      <div className="ml-4">
+                        <select
+                          className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                          defaultValue={"default"}
+                          value={editedFacultyManage}
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            setEditedFacultyManage(selectedValue);
+                          }}
+                        >
+                          <option value="default">All Faculty</option>
+                          {faculties.map((fac) => (
+                            <option key={fac.faculty_id} value={fac.faculty_name}>
+                              {fac.faculty_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="ml-4">
+                        <select
+                          className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                          defaultValue={"default"}
+                          value={editedYearManage}
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            setEditedYearManage(selectedValue);
+                          }}
+                        >
+                          <option value="default">All Year</option>
+                          {academicYears.map((year) => (
+                            <option key={year.academic_year_id} value={year.academic_year}>
+                              {year.academic_year}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <button onClick={() => handleChangeYearNonPublish(editedYearManage, editedFacultyManage)} className="bg-green-500 text-white py-2 px-4 rounded-md h-full">Search</button>
+                    </div>
+                  </div>
                   <div className="flex justify-end mb-4">
-                    <select
-                      className="text-center block appearance-none bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
-                      defaultValue={"default"}
-                      value={editedYearManage}
-                      onChange={(e) => {
-                        const selectedValue = e.target.value;
-                        setEditedYearManage(selectedValue);
-                        handleChangeYearNonPublish(selectedValue);
-                      }}
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                      onClick={handleDownloadAllFiles}
                     >
-                      <option value="default">All Year</option>
-                      {academicYears.map((year) => (
-                        <option key={year.academic_year_id} value={year.academic_year}>
-                          {year.academic_year}
-                        </option>
-                      ))}
-                    </select>
+                      Download All Files
+                    </button>
                   </div>
                   <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                     <thead className="bg-gray-50">

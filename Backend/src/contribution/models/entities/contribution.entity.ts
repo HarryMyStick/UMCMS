@@ -32,14 +32,14 @@ export class Contribution extends BaseEntity {
   @Column({ default: "default" })
   image_url: string;
 
+  @Column({ default: "not comment" })
+  comment: string;
+
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   submission_date: Date;
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
   edit_date: Date;
-
-  @Column({ default: true })
-  isEnable: boolean;
 
   @Column({ default: 'Pending' })
   status: string;

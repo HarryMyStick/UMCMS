@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import type { NextPage } from "next";
 import { urlBackend } from "../global";
+import { MD5 } from 'crypto-js';
 
 export const Register: NextPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -42,6 +43,7 @@ export const Register: NextPage = () => {
     const fieldUsername = username.current?.value.trim();
     const fieldPassword = password.current?.value.trim();
     const fieldConfirmPassword = confirmPassword.current?.value.trim();
+    const hashPassword = fieldPassword ? MD5(fieldPassword).toString() : undefined;
     const fieldFacultyName = facultyName.current?.value.trim();
 
     if (!fieldUsername || !fieldPassword || !fieldConfirmPassword || !fieldFacultyName) {
@@ -55,11 +57,6 @@ export const Register: NextPage = () => {
     }
 
     try {
-      console.log(JSON.stringify({
-        username: fieldUsername,
-        password: fieldPassword,
-        faculty_name: fieldFacultyName,
-      }));
       const response = await fetch(`${urlBackend}/users/register`, {
         method: "POST",
         headers: {
@@ -67,7 +64,7 @@ export const Register: NextPage = () => {
         },
         body: JSON.stringify({
           username: fieldUsername,
-          password: fieldPassword,
+          password: hashPassword,
           faculty_name: fieldFacultyName,
         }),
       });

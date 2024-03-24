@@ -12,6 +12,9 @@ export class AdminCreateUserDto {
   password: string;
 
   @IsNotEmpty()
+  email: string;
+
+  @IsNotEmpty()
   faculty_id: string;
 
   @IsNotEmpty()

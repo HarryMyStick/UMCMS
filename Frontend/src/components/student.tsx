@@ -60,10 +60,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [wordFile, setWordFile] = useState<File | null | undefined>(null);
   const [imageFile, setImageFiles] = useState<File | null | undefined>(null);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [contributionIdIndex, setContributionIdIndex] = useState("");
   const [currentAcademicYear, setCurrentAcademicYear] = useState<AcademicYear>();
   const [userFacultyName, setUserFacultyName] = useState("");
-  const [mkEmail, setMkEmail] = useState("");
   const [agreeTerm, setAgreeTerm] = useState(false);
 
   const title = useRef<HTMLInputElement>(null);
@@ -102,17 +102,19 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     } else {
       showAllMagazineByFacultyAndYearNonPublish(editedYearManage);
     }
+    initData();
+  }, []);
+
+  const initData = () => {
     fetchProfileData();
     getAllAcademicYear();
     getAcademicYearByYear();
     getFacultyByUserId();
-    getMkProfile();
-  }, []);
+  }
 
   const handleLogout = () => {
-    // Implement your logout functionality here
-    // For example, clearing local storage or session
-    router.push("/login"); // Redirect to login page after logout
+    localStorage.removeItem('sessionId');
+    router.push("/login");
   };
 
   const handleChangeYear = (year: string) => {
@@ -172,10 +174,19 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     setIsCommentOpen(true);
   };
 
+  const closeChatPopup = () => {
+    setIsChatOpen(false);
+  };
+
+  const openChatPopup = (contributionId: string) => {
+    setContributionIdIndex(contributionId);
+    setIsChatOpen(true);
+  };
+
   // start method reset form submit contributions
   const handleSentFile = async () => {
     try {
-
+      initData();
       if (currentAcademicYear) {
         const currentDate = new Date();
         const closureDate = new Date(currentAcademicYear?.closure_date);
@@ -183,26 +194,35 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           setNotification({ type: "error", message: "Time to contribute to the magazine is end. Thanks for your contributions!" })
         } else {
           getFacultyByUserId();
-          getMkProfile();
-          if (mkEmail) {
-            await fetchUploadData();
-            setAgree(false);
-            const currentTime = new Date();
-            const formattedTime = currentTime.toLocaleString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
+          try {
+            const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
             });
-            sendEmail(mkEmail, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
-          } else {
-            getFacultyByUserId();
-            getMkProfile();
-            setNotification({ type: "error", message: "Please contact with your marketing coordinator to update his email or try again later." });
+            if (response.ok) {
+              const data = await response.json();
+              await fetchUploadData();
+              setAgree(false);
+              const currentTime = new Date();
+              const formattedTime = currentTime.toLocaleString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              });
+              sendEmail(data.email, "UMCMS System - New Submited Contribution", "A Contribution Submited At " + formattedTime + " please read and comment within 14 days!!!");
+            } else {
+              setNotification({ type: "error", message: "Please contact with your marketing coordinator to update his email or try again later." });
+            }
+          } catch (error) {
+            console.error(error);
           }
         }
       } else {
+        initData();
         getAcademicYearByYear();
         handleSentFile();
       }
@@ -434,25 +454,6 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
-  const getMkProfile = async () => {
-    console.log("MK called");
-    try {
-      const response = await fetch(`${urlBackend}/users/getProfileOfMK/${userFacultyName}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setMkEmail(data.email);
-        console.log(data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
   const showMagazineOfStudent = async () => {
     try {
       const response = await fetch(`${urlBackend}/users/getFacultyByUserId/${userId}`, {
@@ -464,7 +465,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (response.ok) {
         const data = await response.json();
         const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyName/${facultyName}`, {
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionViaUserId/${userId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -510,7 +511,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (response.ok) {
         const data = await response.json();
         const facultyName = data.faculty_name;
-        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameAndByYear`, {
+        const getMagazineResponse = await fetch(`${urlBackend}/contribution/getContributionsByFacultyNameByYearByUserId`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -518,6 +519,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           body: JSON.stringify({
             faculty_name: facultyName,
             year: year,
+            user_id: userId,
           }),
         });
 
@@ -1455,6 +1457,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Status</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Comment</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Action</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Chat</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1497,6 +1500,29 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-red-500 hover:text-red-700 focus:outline-none">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                  </svg>
+                                </button>
+                              </td>
+                              <td className="px-8 py-2 whitespace-wrap relative border-b border-gray-300">
+                                <button onClick={() => openChatPopup(magazine.sc_contribution_id)} className="border border-gray-500 text-white py-1 px-2 rounded-md">
+                                  <svg
+                                    version="1.1"
+                                    id="Layer_1"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    x="0px"
+                                    y="0px"
+                                    width="60px"
+                                    height="40px"
+                                    viewBox="0 0 122.88 86.411"
+                                    enable-background="new 0 0 122.88 86.411"
+                                  >
+                                    <g>
+                                      <path
+                                        fill-rule="evenodd"
+                                        clip-rule="evenodd"
+                                        d="M83.298,8.182h25.469c7.763,0,14.113,6.351,14.113,14.113v24.907c0,7.761-6.352,14.113-14.113,14.113H97.802c1.569,6.206,3.469,11.781,9.272,16.929c-11.098-2.838-19.664-8.576-25.952-16.929h-1.895c-0.737,0-1.509-0.058-2.303-0.168c4.193-3.396,7.106-7.659,7.106-12.275V38.493c0.926,0.644,2.051,1.021,3.264,1.021c3.164,0,5.73-2.566,5.73-5.729s-2.566-5.729-5.73-5.729c-1.213,0-2.338,0.377-3.264,1.02V13.535C84.031,11.683,83.774,9.888,83.298,8.182L83.298,8.182z M57.055,28.881c-3.201,0-5.796,2.596-5.796,5.796s2.596,5.796,5.796,5.796c3.2,0,5.796-2.596,5.796-5.796S60.255,28.881,57.055,28.881L57.055,28.881z M21.488,28.881c-3.201,0-5.796,2.596-5.796,5.796s2.596,5.796,5.796,5.796s5.796-2.596,5.796-5.796S24.689,28.881,21.488,28.881L21.488,28.881z M39.271,28.881c-3.201,0-5.796,2.596-5.796,5.796s2.595,5.796,5.796,5.796s5.796-2.596,5.796-5.796S42.472,28.881,39.271,28.881L39.271,28.881z M59,3.572H19.542c-8.785,0-15.971,7.187-15.971,15.971v28.184c0,8.783,7.188,15.971,15.971,15.971h12.407c-1.775,7.022-3.924,13.332-10.493,19.156c12.558-3.211,22.252-9.704,29.367-19.156h2.145c8.783,0,22.002-7.187,22.002-15.971V19.542C74.971,10.759,67.784,3.572,59,3.572L59,3.572z M19.542,0H59h0.005v0.014c5.386,0.002,10.27,2.193,13.8,5.724l-0.008,0.007c3.536,3.539,5.731,8.422,5.732,13.796h0.014v0.002h-0.014v28.184h0.014v0.003h-0.014c-0.002,5.746-3.994,10.752-9.312,14.248c-4.952,3.256-11.205,5.277-16.247,5.277v0.015h-0.002v-0.015h-0.404c-3.562,4.436-7.696,8.225-12.43,11.333c-5.235,3.438-11.157,6.028-17.799,7.727l-0.003-0.012c-1.25,0.315-2.628-0.06-3.541-1.091c-1.302-1.472-1.165-3.721,0.307-5.023c2.896-2.567,4.816-5.239,6.207-8.041c0.774-1.559,1.398-3.188,1.939-4.878h-7.702h-0.005v-0.015c-5.384-0.001-10.269-2.193-13.799-5.723c-3.531-3.531-5.724-8.417-5.725-13.804H0v-0.002h0.014V19.542H0v-0.005h0.014c0.015-5.279,2.126-10.076,5.541-13.59c0.062-0.073,0.127-0.145,0.196-0.214c3.531-3.531,8.417-5.724,13.804-5.725V0H19.542L19.542,0z M105.57,28.056c-3.163,0-5.729,2.566-5.729,5.729s2.566,5.729,5.729,5.729c3.164,0,5.73-2.566,5.73-5.729S108.734,28.056,105.57,28.056L105.57,28.056z"
+                                      />
+                                    </g>
                                   </svg>
                                 </button>
                               </td>
@@ -1712,7 +1738,22 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         ))
         }
       </div >
-      <Chat userId={userId} role="Student" />
+      {
+        isChatOpen ? (
+          <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg">
+              <Chat
+                isOpen={isChatOpen}
+                onClose={closeChatPopup}
+                contribution_id={contributionIdIndex}
+                userId={userId}
+                role="Student"
+              />
+            </div>
+          </div>
+        ) : null
+      }
+
     </div >
   );
 };

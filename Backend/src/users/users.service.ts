@@ -11,6 +11,7 @@ import { Faculty } from 'src/faculty/models/entities/faculty.entity';
 import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
 import { Profile } from 'src/profile/models/entities/profile.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,7 @@ export class UsersService {
     private readonly profileService: ProfileService,
     private readonly facultyService: FacultyService,
     private readonly roleService: RoleService,
+    private jwtService: JwtService,
   ) { }
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
@@ -63,23 +65,28 @@ export class UsersService {
     return user;
   }
 
-  async login(createUserDto: CreateUserDto): Promise<User | undefined> {
+  async login(createUserDto: CreateUserDto): Promise<string> {
     const { username, password } = createUserDto;
 
-    const existingUser = await this.usersRepository.findOne({
+    const user = await this.usersRepository.findOne({
       where: { username, password },
       relations: ['role']
     });
 
-    return existingUser;
+    if (!user) {
+      throw new NotFoundException('Invalid username or password');
+    }
+
+    const payload = { username: user.username, sub: user.user_id };
+    return this.jwtService.sign(payload);
   }
 
   async getFacultyByUserId(userId: string): Promise<Faculty> {
     const user = await this.usersRepository.findOne({
-       where: { user_id: userId }, 
-       relations: ['faculty']
-      });
-    
+      where: { user_id: userId },
+      relations: ['faculty']
+    });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -93,9 +100,20 @@ export class UsersService {
 
   async getUserByUserId(userId: string): Promise<User> {
     const user = await this.usersRepository.findOne({
-       where: { user_id: userId },
-      });
-    
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+  async getUserByUsername(username: string): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { username: username },
+      relations: ['role'],
+    });
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -103,14 +121,24 @@ export class UsersService {
   }
 
   async getAllUsersWithRoles(): Promise<User[]> {
-    return this.usersRepository.find({ relations: ['role', 'faculty']});
-  }
+    return this.usersRepository
+      .createQueryBuilder('u')
+      .innerJoin('u.role', 'r')
+      .innerJoin('u.faculty', 'f')
+      .innerJoin('profile', 'p', 'p.user_id = u.user_id')
+      .addSelect(['u', 'u.user_id'])
+      .addSelect(['u', 'f.faculty_name'])
+      .addSelect(['u', 'r.role_name'])
+      .addSelect(['u', 'p.email'])
+      .addSelect(['u', 'p.profile_id'])
+      .getRawMany();
+  }  
 
   async updateUser(updateRoleUserDto: UpdateRoleUserDto): Promise<User> {
-    const { user_id, role_name, faculty_name, password} = updateRoleUserDto;
+    const { user_id, role_name, faculty_name, password, email } = updateRoleUserDto;
     const user = await this.usersRepository.findOne({
       where: { user_id: user_id },
-      relations: ['role', 'faculty'], 
+      relations: ['role', 'faculty'],
     });
 
     if (!user) {
@@ -152,7 +180,7 @@ export class UsersService {
   }
 
   async adminCreateUser(adminCreateUserDto: AdminCreateUserDto): Promise<User> {
-    const { username, faculty_id, role_id } = adminCreateUserDto;
+    const { username, email, faculty_id, role_id } = adminCreateUserDto;
 
     const existingUser = await this.usersRepository.findOne({
       where: [{ username }],
@@ -163,7 +191,7 @@ export class UsersService {
     }
 
     const faculty = await this.facultyRepository.findOne({
-      where: [{ faculty_id: faculty_id}],
+      where: [{ faculty_id: faculty_id }],
     });
 
     if (!faculty) {
@@ -184,7 +212,7 @@ export class UsersService {
       faculty: faculty,
     });
 
-    await this.profileService.createProfile(user);
+    await this.profileService.adminCreateProfile(user, email);
 
     await user.save();
 

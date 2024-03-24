@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
 import Chart from 'chart.js/auto';
+import { MD5 } from "crypto-js";
 
 interface NavProps {
   userId: string;
@@ -24,11 +25,13 @@ interface AcademicYear {
 }
 
 interface User {
-  user_id: string;
-  username: string;
-  password: string;
-  role: Role;
-  faculty: Faculty;
+  u_user_id: string;
+  u_username: string;
+  u_password: string;
+  r_role_name: string;
+  f_faculty_name: string;
+  p_email: string;
+  p_profile_id: string;
 }
 
 interface Role {
@@ -51,7 +54,6 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [academicYears, setAcademicYears] = useState<AcademicYear>();
   const [academicYearsAR, setAcademicYearsAR] = useState<AcademicYear[]>([]);
   const [editedYear, setEditedYear] = useState("");
 
@@ -65,6 +67,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const [createClicked, setCreateClicked] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newFaculty, setNewFaculty] = useState("");
   const [newRole, setNewRole] = useState("");
 
@@ -128,6 +131,10 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     setCreateYearMode(true);
   };
 
+  const handleCancelCreateYear = () => {
+    setCreateYearMode(false);
+  }
+
   const handleStopCreateYear = async (academic_year: string) => {
     try {
       const response = await fetch(`${urlBackend}/academicyear/createAcedemicYear/`, {
@@ -151,6 +158,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('sessionId');
     router.push("/login");
   };
 
@@ -174,13 +182,24 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     setEditingRowIndex(index);
   };
 
+  const handleCancelEditRole = () => {
+    setEditingRowIndex(null);
+  };
+
   const handleEditYear = (index: number) => {
     setEditingYearIndex(index);
   };
 
-  const handleStopEditRole = (user_id: string, password: string, facultyName: string, roleName: string) => {
-    setEditingRowIndex(null);
-    updateAccountRole(user_id, password, facultyName, roleName);
+  const handleStopEditRole = (user_id: string, password: string, facultyName: string, roleName: string, gmail: string, profile_id: string) => {
+    const emailPattern = /.+@[^@]+\..+/;
+
+    if (!emailPattern.test(gmail)) {
+      setNotification({ type: "error", message: "Invalid email format. Please enter a valid email address." });
+    } else {
+      setEditingRowIndex(null);
+      const hashPassword = MD5(password).toString();
+      updateAccountRole(user_id, hashPassword, facultyName, roleName, gmail, profile_id);
+    }
   };
 
   const handleClosureDateChange = (closureDate: string, index: number) => {
@@ -218,10 +237,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       if (userToUpdate) {
         updatedUserList[index] = {
           ...userToUpdate,
-          role: {
-            ...userToUpdate.role,
-            role_name: roleName,
-          },
+          r_role_name: roleName,
         };
       }
       return updatedUserList;
@@ -235,10 +251,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       if (userToUpdate) {
         updatedUserList[index] = {
           ...userToUpdate,
-          faculty: {
-            ...userToUpdate.faculty,
-            faculty_name: facultyName,
-          },
+          f_faculty_name: facultyName,
         };
       }
       return updatedUserList;
@@ -246,13 +259,29 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   };
 
   const handlePasswordChange = (password: string, index: number) => {
+    if (password !== "" || password !== null) {
+      setUserList(prevUserList => {
+        const updatedUserList = [...prevUserList];
+        const userToUpdate = updatedUserList[index];
+        if (userToUpdate) {
+          updatedUserList[index] = {
+            ...userToUpdate,
+            u_password: password,
+          };
+        }
+        return updatedUserList;
+      });
+    };
+  };
+
+  const handleEmailChange = (email: string, index: number) => {
     setUserList(prevUserList => {
       const updatedUserList = [...prevUserList];
       const userToUpdate = updatedUserList[index];
       if (userToUpdate) {
         updatedUserList[index] = {
           ...userToUpdate,
-          password: password,
+          p_email: email,
         };
       }
       return updatedUserList;
@@ -261,26 +290,34 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
   const handleSubmit = async () => {
     try {
-      if (!newUsername || !newPassword) {
-        setNotification({ type: "error", message: "Please enter enough information." });
+      const emailPattern = /.+@[^@]+\..+/;
+
+      if (!emailPattern.test(newEmail)) {
+        setNotification({ type: "error", message: "Invalid email format. Please enter a valid email address." });
       } else {
-        const response = await fetch(`${urlBackend}/users/adminRegister/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: newUsername,
-            password: newPassword,
-            faculty_id: newFaculty,
-            role_id: newRole,
-          })
-        });
-        if (response.ok) {
-          setCreateClicked(false);
-          getAllUser();
+        const hashPassword = MD5(newPassword).toString();
+        if (!newUsername || !newPassword || !newEmail) {
+          setNotification({ type: "error", message: "Please enter enough information." });
         } else {
-          console.log("Cancelled.");
+          const response = await fetch(`${urlBackend}/users/adminRegister/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username: newUsername,
+              password: hashPassword,
+              email: newEmail,
+              faculty_id: newFaculty,
+              role_id: newRole,
+            })
+          });
+          if (response.ok) {
+            setCreateClicked(false);
+            getAllUser();
+          } else {
+            console.log("Cancelled.");
+          }
         }
       }
     } catch (error) {
@@ -290,9 +327,9 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
   const handleDeleteAccount = async (user: User) => {
     // Display an alert to confirm deletion
-    if (window.confirm(`Are you sure you want to delete the account for ${user.username}?`)) {
+    if (window.confirm(`Are you sure you want to delete the account for ${user.u_username}?`)) {
       try {
-        const response = await fetch(`${urlBackend}/users/deleteUser/${user.user_id}`, {
+        const response = await fetch(`${urlBackend}/users/deleteUser/${user.u_user_id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -305,7 +342,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
-      console.log(`Deleting account for ${user.username}...`);
+      console.log(`Deleting account for ${user.u_username}...`);
     } else {
       console.log("Deletion cancelled.");
     }
@@ -360,7 +397,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   }
 
 
-  const updateAccountRole = async (user_id: string, password: string, faculty_name: string, role_name: string) => {
+  const updateAccountRole = async (user_id: string, password: string, faculty_name: string, role_name: string, gmail: string, profile_id: string) => {
     try {
       const response = await fetch(`${urlBackend}/users/updateUser`, {
         method: "POST",
@@ -371,7 +408,9 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
           user_id: user_id,
           password: password,
           faculty_name: faculty_name,
-          role_name: role_name
+          role_name: role_name,
+          email: gmail,
+          profile_id: profile_id
         })
       });
       if (response.ok) {
@@ -414,128 +453,170 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
       const contributionData = await contributionResponse.json();
       const contributorData = await contributorResponse.json();
+      const containerChart = document.getElementById('container-chart');
+      if (containerChart) {
+        if (contributionData.length === 0) {
+          containerChart.innerHTML = `
+                    <div id="no-data" class="flex items-center justify-center h-full">
+                        <h1 class="text-2xl font-semibold">There is no contributions be contribute this year!!</h1>
+                    </div>
+                `;
+        } else {
+          const containerChartHTML = `
+            <div id="container-chart">
+                <div class="container mx-auto px-4 py-8">
+                    <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                    <div class="grid grid-cols-1 gap-8">
+                        <div class="chart-container">
+                            <div class="flex justify-center">
+                                <div class="w-[800px] max-w-xl mx-auto">
+                                    <canvas id="myChartCounts"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <div class="chart-container">
+                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                            <div class="max-w-sm mx-auto">
+                                <canvas id="myChartPercentages"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                            <div class="max-w-sm mx-auto">
+                                <canvas id="myChartContributors"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+          containerChart.innerHTML = containerChartHTML;
 
-      // RENDER COUNT CONTRIBUTION CHART
+          // RENDER COUNT CONTRIBUTION CHART
 
-      const countsContribution = contributionData.map((item: { contributionCount: any; }) => item.contributionCount);
-      const labelsContribution = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
-      const canvasContribution = document.getElementById("myChartCounts") as HTMLCanvasElement;
-      if (canvasContribution) {
-        Chart.getChart(canvasContribution)?.destroy();
-        new Chart(canvasContribution, {
-          type: 'bar',
-          data: {
-            labels: labelsContribution,
-            datasets: [{
-              label: 'Contribution Count',
-              data: countsContribution,
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-              ],
+          const countsContribution = contributionData.map((item: { contributionCount: any; }) => item.contributionCount);
+          const labelsContribution = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+          const canvasContribution = document.getElementById("myChartCounts") as HTMLCanvasElement;
+          if (canvasContribution) {
+            Chart.getChart(canvasContribution)?.destroy();
+            new Chart(canvasContribution, {
+              type: 'bar',
+              data: {
+                labels: labelsContribution,
+                datasets: [{
+                  label: 'Contribution Count',
+                  data: countsContribution,
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                  ],
 
-              borderColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-              ],
-              borderWidth: 1,
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                ticks: {
-                  stepSize: 1
-                }
-              }
-            },
-            plugins: {
-              legend: {
-                display: false
-              }
-            }
-          }
-        });
-      }
-
-      // RENDER COUNT CONTRIBUTION PERCENTAGE CHART
-
-      const countsContributionPercentage = contributionData.map((item: { contributionCount: string; }) => parseInt(item.contributionCount));
-      const totalContributions = countsContributionPercentage.reduce((a: any, b: any) => a + b, 0); // Calculate the total count
-      const labelsContributionPercentage = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
-      const canvasContributionPercentage = document.getElementById("myChartPercentages") as HTMLCanvasElement;
-      if (canvasContributionPercentage) {
-        Chart.getChart(canvasContributionPercentage)?.destroy();
-        new Chart(canvasContributionPercentage, {
-          type: 'doughnut',
-          data: {
-            labels: labelsContributionPercentage,
-            datasets: [{
-              label: 'Contribution Percentage',
-              data: countsContributionPercentage,
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-              ],
-              hoverOffset: 4
-            }]
-          },
-          options: {
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    var label = context.label || '';
-                    if (label) {
-                      label += ': ';
+                  borderColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                  ],
+                  borderWidth: 1,
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    ticks: {
+                      stepSize: 1
                     }
-                    const contributionIndex = context.dataIndex;
-                    const contributionCount = countsContributionPercentage[contributionIndex];
-                    const percentage = ((contributionCount / totalContributions) * 100).toFixed(2);
-                    label += percentage + '%';
-                    return label;
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: false
                   }
                 }
               }
-            }
+            });
           }
-        });
-      }
 
-      // RENDER CONTRIBUTOR CHART
+          // RENDER COUNT CONTRIBUTION PERCENTAGE CHART
 
-      const countsContributor = contributorData.map((item: { contributorCount: any; }) => item.contributorCount);
-      const labelsContributor = contributorData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
-      const canvasContributor = document.getElementById("myChartContributors") as HTMLCanvasElement;
-      if (canvasContributor) {
-        Chart.getChart(canvasContributor)?.destroy();
-        new Chart(canvasContributor, {
-          type: 'doughnut',
-          data: {
-            labels: labelsContributor,
-            datasets: [{
-              label: 'Contributior',
-              data: countsContributor,
-              backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-              ],
-              hoverOffset: 4
-            }]
+          const countsContributionPercentage = contributionData.map((item: { contributionCount: string; }) => parseInt(item.contributionCount));
+          const totalContributions = countsContributionPercentage.reduce((a: any, b: any) => a + b, 0); // Calculate the total count
+          const labelsContributionPercentage = contributionData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+          const canvasContributionPercentage = document.getElementById("myChartPercentages") as HTMLCanvasElement;
+          if (canvasContributionPercentage) {
+            Chart.getChart(canvasContributionPercentage)?.destroy();
+            new Chart(canvasContributionPercentage, {
+              type: 'doughnut',
+              data: {
+                labels: labelsContributionPercentage,
+                datasets: [{
+                  label: 'Contribution Percentage',
+                  data: countsContributionPercentage,
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                  ],
+                  hoverOffset: 4
+                }]
+              },
+              options: {
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        var label = context.label || '';
+                        if (label) {
+                          label += ': ';
+                        }
+                        const contributionIndex = context.dataIndex;
+                        const contributionCount = countsContributionPercentage[contributionIndex];
+                        const percentage = ((contributionCount / totalContributions) * 100).toFixed(2);
+                        label += percentage + '%';
+                        return label;
+                      }
+                    }
+                  }
+                }
+              }
+            });
           }
-        });
+
+          // RENDER CONTRIBUTOR CHART
+
+          const countsContributor = contributorData.map((item: { contributorCount: any; }) => item.contributorCount);
+          const labelsContributor = contributorData.map((item: { facultyName: any; academicYear: any; }) => `${item.facultyName} (${item.academicYear})`);
+          const canvasContributor = document.getElementById("myChartContributors") as HTMLCanvasElement;
+          if (canvasContributor) {
+            Chart.getChart(canvasContributor)?.destroy();
+            new Chart(canvasContributor, {
+              type: 'doughnut',
+              data: {
+                labels: labelsContributor,
+                datasets: [{
+                  label: 'Contributior',
+                  data: countsContributor,
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                  ],
+                  hoverOffset: 4
+                }]
+              }
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -613,6 +694,10 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     }
   }
 
+  const handleCancelEditYear = () => {
+    setEditingYearIndex(null);
+  }
+
   const handleStopEditYear = async (closure_date: string, final_closure_date: string, year: AcademicYear) => {
     try {
       const closureDate = new Date(closure_date);
@@ -627,7 +712,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            academic_year_id: academicYears?.academic_year_id,
+            academic_year_id: year.academic_year_id,
             closure_date: closureDate,
             final_closure_date: finalClosureDate,
           }),
@@ -822,6 +907,12 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                         >
                           Save
                         </button>
+                        <button
+                          className="px-4 py-2 ml-2 bg-red-500 text-white rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:bg-red-600"
+                          onClick={() => handleCancelCreateYear()}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     </div>
                   ) : (
@@ -898,27 +989,48 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 )}
                               </div>
                             </td>
-                            <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
+                            <td className="px-2 py-2 w-1/6 text-center border-b border-gray-300">
                               {editingYearIndex === index ? (
-                                <button
-                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900 p-1"
-                                  onClick={() => handleStopEditYear(year.closure_date, year.final_closure_date, year)}
-                                >
-                                  <svg
-                                    className="w-5 h-5 mt-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
+                                <div>
+                                  <button
+                                    className="text-green-600 hover:text-green-900 p-1"
+                                    onClick={() => handleStopEditYear(year.closure_date, year.final_closure_date, year)}
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                </button>
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEditYear}
+                                    className="text-red-600 hover:text-red-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-6 w-6"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
                               ) : (
                                 <div className="flex justify-center items-center">
                                   <div>
@@ -1034,6 +1146,13 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                         />
+                        <input
+                          type="email"
+                          placeholder="Email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                        />
                         <select
                           value={newFaculty}
                           onChange={(e) => setNewFaculty(e.target.value)}
@@ -1098,6 +1217,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                         <tr className="bg-gray-100">
                           <th className="px-4 py-2">Username</th>
                           <th className="px-4 py-2">Password</th>
+                          <th className="px-4 py-2">Email</th>
                           <th className="px-4 py-2">Faculty</th>
                           <th className="px-4 py-2">Role</th>
                           <th className="px-4 py-2">Actions</th>
@@ -1106,23 +1226,34 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       <tbody>
                         {userList.map((user, index) => (
                           <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                            <td className="px-4 py-2 text-center border-b border-gray-300">{user.username}</td>
+                            <td className="px-4 py-2 text-center border-b border-gray-300">{user.u_username}</td>
                             <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <input
                                   type="text"
-                                  value={user.password}
                                   onChange={(e) => handlePasswordChange(e.target.value, index)}
                                   className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                                 />
                               ) : (
-                                user.password
+                                <div>***************</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
+                              {editingRowIndex === index ? (
+                                <input
+                                  type="email"
+                                  value={user.p_email}
+                                  onChange={(e) => handleEmailChange(e.target.value, index)}
+                                  className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                />
+                              ) : (
+                                user.p_email
                               )}
                             </td>
                             <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <select
-                                  value={user.faculty.faculty_name}
+                                  value={user.f_faculty_name}
                                   onChange={(e) => handleFacultyChange(e.target.value, index)}
                                   className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                                 >
@@ -1131,13 +1262,13 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   ))}
                                 </select>
                               ) : (
-                                user.faculty.faculty_name
+                                user.f_faculty_name
                               )}
                             </td>
                             <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
                                 <select
-                                  value={user.role.role_name}
+                                  value={user.r_role_name}
                                   onChange={(e) => handleRoleChange(e.target.value, index)}
                                   className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
                                 >
@@ -1146,70 +1277,93 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   ))}
                                 </select>
                               ) : (
-                                user.role.role_name
+                                user.r_role_name
                               )}
                             </td>
                             <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingRowIndex === index ? (
-                                <button
-                                  onClick={() => handleStopEditRole(user.user_id, user.password, user.faculty.faculty_name, user.role.role_name)}
-                                  className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
-                                >
-                                  <svg
-                                    className="w-5 h-5 mt-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
+                                <div>
+                                  <button
+                                    onClick={() => handleStopEditRole(user.u_user_id, user.u_password, user.f_faculty_name, user.r_role_name, user.p_email, user.p_profile_id)}
+                                    className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M5 13l4 4L19 7"
-                                    />
-                                  </svg>
-                                </button>
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEditRole}
+                                    className="mr-2 text-red-600 hover:text-red-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
                               ) : (
-                                <button
-                                  onClick={() => handleEditRole(index)}
-                                  className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
-                                >
-                                  <svg
-                                    className="w-5 h-5 mt-2"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
+                                <div>
+                                  <button
+                                    onClick={() => handleEditRole(index)}
+                                    className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
                                   >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
-                                    />
-                                  </svg>
-                                </button>
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteAccount(user)}
+                                    className="text-red-600 hover:text-red-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-6 w-6"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
                               )}
-                              <button
-                                onClick={() => handleDeleteAccount(user)}
-                                className="text-red-600 hover:text-red-900 focus:outline-none"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-6 w-6"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M6 18L18 6M6 6l12 12"
-                                  />
-                                </svg>
-                              </button>
                             </td>
                           </tr>
                         ))}
@@ -1256,28 +1410,30 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       ))}
                     </select>
                   </div>
-                  <div className="container mx-auto px-4 py-8">
-                    <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
-                    <div className="grid grid-cols-1 gap-8">
-                      <div className="chart-container">
-                        <div className="flex justify-center">
-                          <div className="w-[800px] max-w-xl mx-auto">
-                            <canvas id="myChartCounts"></canvas>
+                  <div id="container-chart">
+                    <div className="container mx-auto px-4 py-8">
+                      <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                      <div className="grid grid-cols-1 gap-8">
+                        <div className="chart-container">
+                          <div className="flex justify-center">
+                            <div className="w-[800px] max-w-xl mx-auto">
+                              <canvas id="myChartCounts"></canvas>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-                      <div className="chart-container">
-                        <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
-                        <div className="max-w-sm mx-auto">
-                          <canvas id="myChartPercentages"></canvas>
+                      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                        <div className="chart-container">
+                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                          <div className="max-w-sm mx-auto">
+                            <canvas id="myChartPercentages"></canvas>
+                          </div>
                         </div>
-                      </div>
-                      <div className="chart-container">
-                        <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
-                        <div className="max-w-sm mx-auto">
-                          <canvas id="myChartContributors"></canvas>
+                        <div className="chart-container">
+                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                          <div className="max-w-sm mx-auto">
+                            <canvas id="myChartContributors"></canvas>
+                          </div>
                         </div>
                       </div>
                     </div>
