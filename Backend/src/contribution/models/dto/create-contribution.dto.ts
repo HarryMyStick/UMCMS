@@ -29,9 +29,6 @@ export class CreateContributionDto {
   edit_date: Date;
 
   @IsNotEmpty()
-  isEnable: boolean;
-
-  @IsNotEmpty()
   status: string;
 
   @IsNotEmpty()
