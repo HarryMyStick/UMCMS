@@ -154,7 +154,7 @@ export const Register: NextPage = () => {
               </div>
             )}
             <button
-              className="mb-5 mt-3 block rounded-md bg-sky-600 px-6 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700"
+              className="mb-5 mt-3 block rounded-md bg-gray-600 px-6 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
               onClick={() => {
                 void registerUser();
               }}

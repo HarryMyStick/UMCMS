@@ -488,7 +488,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
 
           </div>
           <button
-            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            className="ease rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-gray-600"
             onClick={handleLogout}
           >Logout
           </button>
@@ -550,16 +550,16 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                           </div>
                           <div className="px-3 py-4">
                             <h3 className="text-sm text-gray-500 pb-2">
-                              <span className="bg-indigo-600 py-1 px-2 text-white rounded-lg">
+                              <span className="bg-gray-600 py-1 px-2 text-white rounded-lg">
                                 Author: {publishMagazines.p_first_name + ' ' + publishMagazines.p_last_name}
                               </span>
                             </h3>
-                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-indigo-600"> {publishMagazines.sc_article_title}</h3>
-                            <p className="text-base font-semibold text-gray-900 group-hover:text-indigo-600">
+                            <h3 className="text-base font-semibold text-gray-900 group-hover:text-gray-600"> {publishMagazines.sc_article_title}</h3>
+                            <p className="text-base font-semibold text-gray-900 group-hover:text-gray-600">
                               {publishMagazines.sc_article_description}
                             </p>
                             <button
-                              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                               onClick={() => handleFileDownload(publishMagazines.sc_article_content_url)}
                             >
                               <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -647,12 +647,12 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                       </div>
                     </div>
                     <div className="ml-4">
-                      <button onClick={() => handleChangeYearNonPublish(editedYearManage, editedFacultyManage)} className="bg-green-500 text-white py-2 px-4 rounded-md h-full">Search</button>
+                      <button onClick={() => handleChangeYearNonPublish(editedYearManage, editedFacultyManage)} className="bg-gray-500 text-white py-2 px-4 rounded-md h-full">Search</button>
                     </div>
                   </div>
                   <div className="flex justify-end mb-4">
                     <button
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                      className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
                       onClick={handleDownloadAllFiles}
                     >
                       Download All Files
@@ -703,13 +703,13 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                                   <option value="Approved">Approved</option>
                                 </select>
                                 <button
-                                  className="text-green-600 hover:text-green-900 p-1 mr-1"
+                                  className="text-gray-600 hover:text-gray-900 p-1 mr-1"
                                   onClick={() => handleSaveStatus(index, magazine.sc_contribution_id, editedStatus)}
                                 >
                                   Save
                                 </button>
                                 <button
-                                  className="text-red-600 hover:text-red-900 p-1"
+                                  className="text-gray-600 hover:text-gray-900 p-1"
                                   onClick={() => handleCancelEdit()}
                                 >
                                   Cancel
@@ -719,7 +719,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                               <div className="flex items-center justify-center">
                                 <div className="text-sm text-gray-900">{magazine.sc_status}</div>
                                 <button
-                                  className="absolute top-0 right-0 text-green-600 hover:text-green-900 p-1"
+                                  className="absolute top-0 right-0 text-gray-600 hover:text-gray-900 p-1"
                                   onClick={() => handleEditStatus(index)}
                                 >
                                   <svg
@@ -742,7 +742,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium border-b border-gray-300">
                             <button
-                              className="text-green-600 hover:text-green-900"
+                              className="text-gray-600 hover:text-gray-900"
                               onClick={() => handleFileDownload(magazine.sc_article_content_url)}
                             >
                               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -798,7 +798,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-gray-600"
                                 type="button"
                                 onClick={() => handleSaveProfile()}
                               >
@@ -888,7 +888,7 @@ const MarketingManager: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-gray-600"
                                 type="button"
                                 onClick={() => handleEditProfile()}
                               >

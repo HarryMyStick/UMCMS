@@ -842,7 +842,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
 
           </div>
           <button
-            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            className="ease rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-gray-600"
             onClick={handleLogout}
           >Logout
           </button>
@@ -902,13 +902,13 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                           ))}
                         </select>
                         <button
-                          className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+                          className="px-4 py-2 bg-gray-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-gray-600"
                           onClick={() => handleStopCreateYear(yearRange || '2000')}
                         >
                           Save
                         </button>
                         <button
-                          className="px-4 py-2 ml-2 bg-red-500 text-white rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:bg-red-600"
+                          className="px-4 py-2 ml-2 bg-gray-500 text-white rounded-md shadow-md hover:bg-red-600 focus:outline-none focus:bg-gray-600"
                           onClick={() => handleCancelCreateYear()}
                         >
                           Cancel
@@ -918,7 +918,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                   ) : (
                     <div className="flex justify-end mb-4">
                       <button
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md shadow-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
+                        className="px-4 py-2 bg-gray-500 text-white rounded-md shadow-md hover:bg-gray-600 focus:outline-none focus:bg-gray-600"
                         onClick={handleCreateYear}
                       >
                         Create New Academic Year
@@ -993,7 +993,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                               {editingYearIndex === index ? (
                                 <div>
                                   <button
-                                    className="text-green-600 hover:text-green-900 p-1"
+                                    className="text-gray-600 hover:text-gray-900 p-1"
                                     onClick={() => handleStopEditYear(year.closure_date, year.final_closure_date, year)}
                                   >
                                     <svg
@@ -1013,7 +1013,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   </button>
                                   <button
                                     onClick={handleCancelEditYear}
-                                    className="text-red-600 hover:text-red-900 focus:outline-none"
+                                    className="text-gray-600 hover:text-gray-900 focus:outline-none"
                                   >
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
@@ -1036,7 +1036,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   <div>
                                     <div className="flex space-x-2">
                                       <button
-                                        className="text-green-600 hover:text-green-900 p-1"
+                                        className="text-gray-600 hover:text-gray-900 p-1"
                                         onClick={() => handleEditYear(index)}
                                       >
                                         <svg
@@ -1056,7 +1056,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                       </button>
                                       <button
                                         onClick={() => handleDeleteAcademicYear(year)}
-                                        className="text-red-600 hover:text-red-900 focus:outline-none"
+                                        className="text-gray-600 hover:text-gray-900 focus:outline-none"
                                       >
                                         <svg
                                           xmlns="http://www.w3.org/2000/svg"
@@ -1167,7 +1167,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                         <select
                           value={newRole}
                           onChange={(e) => setNewRole(e.target.value)}
-                          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-gray-500"
                         >
                           {roles.map((role) => (
                             <option key={role.role_id} value={role.role_id}>
@@ -1177,13 +1177,13 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                         </select>
                         <button
                           onClick={handleSubmit}
-                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2"
+                          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mx-2"
                         >
                           Submit
                         </button>
                         <button
                           onClick={handleCancel}
-                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-2"
+                          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mx-2"
                         >
                           Cancel
                         </button>
@@ -1191,7 +1191,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                     ) : (
                       <button
                         onClick={handleCreate}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
                       >
                         Create New Account
                       </button>
@@ -1285,7 +1285,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 <div>
                                   <button
                                     onClick={() => handleStopEditRole(user.u_user_id, user.u_password, user.f_faculty_name, user.r_role_name, user.p_email, user.p_profile_id)}
-                                    className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
                                   >
                                     <svg
                                       className="w-5 h-5 mt-2"
@@ -1304,7 +1304,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   </button>
                                   <button
                                     onClick={handleCancelEditRole}
-                                    className="mr-2 text-red-600 hover:text-red-900 focus:outline-none"
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
                                   >
                                     <svg
                                       className="w-5 h-5 mt-2"
@@ -1326,7 +1326,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 <div>
                                   <button
                                     onClick={() => handleEditRole(index)}
-                                    className="mr-2 text-green-600 hover:text-green-900 focus:outline-none"
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
                                   >
                                     <svg
                                       className="w-5 h-5 mt-2"
@@ -1345,7 +1345,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                   </button>
                                   <button
                                     onClick={() => handleDeleteAccount(user)}
-                                    className="text-red-600 hover:text-red-900 focus:outline-none"
+                                    className="text-gray-600 hover:text-gray-900 focus:outline-none"
                                   >
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
@@ -1572,7 +1572,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-gray-600"
                                 type="button"
                                 onClick={() => handleEditProfile()}
                               >

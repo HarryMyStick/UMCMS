@@ -123,7 +123,7 @@ export const Login: NextPage = () => {
               ref={password}
             />
             <button
-              className="mt-3 block rounded-md bg-sky-600 px-4 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700"
+              className="mt-3 block rounded-md bg-gray-600 px-4 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
               onClick={() => {
                 void logIn();
               }}
@@ -131,7 +131,7 @@ export const Login: NextPage = () => {
               <span id="login_default_state">Sign in</span>
             </button>
             <a href="/register" className="block w-full">
-              <div className="mb-3 mt-2 flex items-center justify-center rounded-md bg-sky-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-sky-700">
+              <div className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700">
                 <span id="login_default_state">Create new account</span>
               </div>
             </a>
