@@ -3,8 +3,76 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { urlBackend } from "../global";
+<<<<<<< Updated upstream
 import Chat from "./chat";
 import Comment from './comment';
+=======
+import Header from "./header";
+import Homepage from "./homepage";
+
+const NavbarScript: React.FC = () => {
+  useEffect(() => {
+    const handleBurgerClick = () => {
+      const menus = document.querySelectorAll(".navbar-menu");
+      menus.forEach((menu) => {
+        menu.classList.toggle("hidden");
+      });
+    };
+
+    const handleMenuClose = () => {
+      const menus = document.querySelectorAll(".navbar-menu");
+      menus.forEach((menu) => {
+        menu.classList.toggle("hidden");
+      });
+    };
+
+    const burger = document.querySelectorAll(".navbar-burger");
+    const close = document.querySelectorAll(".navbar-close");
+    const backdrop = document.querySelectorAll(".navbar-backdrop");
+
+    if (burger.length) {
+      burger.forEach((burgerItem) => {
+        burgerItem.addEventListener("click", handleBurgerClick);
+      });
+    }
+
+    if (close.length) {
+      close.forEach((closeItem) => {
+        closeItem.addEventListener("click", handleMenuClose);
+      });
+    }
+
+    if (backdrop.length) {
+      backdrop.forEach((backdropItem) => {
+        backdropItem.addEventListener("click", handleMenuClose);
+      });
+    }
+
+    // Cleanup event listeners
+    return () => {
+      if (burger.length) {
+        burger.forEach((burgerItem) => {
+          burgerItem.removeEventListener("click", handleBurgerClick);
+        });
+      }
+
+      if (close.length) {
+        close.forEach((closeItem) => {
+          closeItem.removeEventListener("click", handleMenuClose);
+        });
+      }
+
+      if (backdrop.length) {
+        backdrop.forEach((backdropItem) => {
+          backdropItem.removeEventListener("click", handleMenuClose);
+        });
+      }
+    };
+  }, []);
+
+  return null; // Since this component is only for handling script, return null in the render.
+};
+>>>>>>> Stashed changes
 
 interface NavProps {
   userId: string;
@@ -44,6 +112,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const phoneNumber = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
 
+<<<<<<< Updated upstream
   const [titleValue, setTitleValue] = useState<string>('');
   const [descriptionValue, setDescriptionValue] = useState<string>('');
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -78,10 +147,15 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     const tabsLength = tabs.length;
     return storedTabIndex && parseInt(storedTabIndex) < tabsLength ? parseInt(storedTabIndex) : 0;
   });
+=======
+  const [titleValue, setTitleValue] = useState<string>("");
+  const [descriptionValue, setDescriptionValue] = useState<string>("");
+>>>>>>> Stashed changes
 
 
   useEffect(() => {
     const timeout = setTimeout(() => {
+<<<<<<< Updated upstream
       displayMessage("", "");
     }, 3000);
     return () => clearTimeout(timeout);
@@ -143,6 +217,20 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     } else {
       getAcademicYearByYear();
       handleEdit(contribution);
+=======
+      setErrorMessage("");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [errorMessage]);
+
+  // start method reset form submit contributions
+  const handleSentFile = async () => {
+    try {
+      await fetchUploadData(); // Gửi dữ liệu
+      resetForm(); // Đặt lại form sau khi gửi dữ liệu
+    } catch (error) {
+      console.error("Error handling file upload:", error);
+>>>>>>> Stashed changes
     }
   };
 
@@ -336,8 +424,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     // Đặt lại trạng thái của các trường trong form
     setWordFile(null);
     setImageFiles(null);
-    setTitleValue('');
-    setDescriptionValue('');
+    setTitleValue("");
+    setDescriptionValue("");
     // Đặt lại trạng thái của các trường khác nếu cần thiết
   };
 
@@ -688,19 +776,16 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     try {
       const response = await fetch(`${urlBackend}/profile/updateProfile`, {
         method: "POST",
-        body: JSON.stringify(
-          {
-            profile_id: profile.profile_id,
-            first_name: fieldFirstName,
-            last_name: fieldLastName,
-            email: fieldEmail,
-            phone_number: fieldPhoneNumber
-          }
-        ),
+        body: JSON.stringify({
+          profile_id: profile.profile_id,
+          first_name: fieldFirstName,
+          last_name: fieldLastName,
+          email: fieldEmail,
+          phone_number: fieldPhoneNumber,
+        }),
         headers: {
           "Content-Type": "application/json",
         },
-
       });
       if (response.ok) {
         setEditingRowIndex(null);
@@ -714,17 +799,18 @@ const Student: React.FC<NavProps> = ({ userId }) => {
     }
 
   };
+<<<<<<< Updated upstream
   //End update profile
+=======
+>>>>>>> Stashed changes
 
   const handleClick = (index: number) => {
     setActiveTab(index);
   };
 
-
-
-
   // Start Upload
 
+<<<<<<< Updated upstream
   const handleImageFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
@@ -736,6 +822,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
         displayMessage("error", "Please select a PNG or JPEG image file.")
         event.target.value = ''; // Xóa giá trị file không hợp lệ khỏi trường nhập file
       }
+=======
+  const handleImageFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (event.target.files) {
+      setImageFiles(event.target.files[0]);
+>>>>>>> Stashed changes
     }
   };
 
@@ -764,6 +857,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const fetchUploadData = async () => {
     try {
+<<<<<<< Updated upstream
       const fieldTitle = title.current?.value?.trim() || '';
       const fieldDescription = description.current?.value?.trim() || '';
       if (fieldTitle === "" || fieldDescription === "") {
@@ -800,6 +894,48 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           dataFormImage.append("contribution_id", contributionId);
           dataFormImage.append("imageFile", imageFile as Blob);
           setNotification({ type: "success", message: "Submit Contribution Success" });
+=======
+      const fieldTitle = title.current?.value?.trim() || "";
+      const fieldDescription = description.current?.value?.trim() || "";
+      if (fieldTitle === "" || fieldDescription === "") {
+        setErrorMessage("Please enter full information.");
+      }
+      const formData = new FormData();
+      formData.append("user_id", userId);
+      formData.append("article_title", fieldTitle);
+      formData.append("article_description", fieldDescription);
+      formData.append("submission_date", "2024-03-09T12:00:00Z");
+      formData.append("edit_date", "2024-03-09T12:00:00Z");
+      formData.append("status", "Published");
+      formData.append(
+        "academic_year_id",
+        "2891d2f3-8862-4b6a-8e0c-ee3ab56a1514"
+      );
+      formData.append("articleFile", wordFile as Blob);
+
+      const response = await fetch(
+        `${urlBackend}/contribution/createContribution/`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json(); // Assuming the response body contains JSON data
+        const contributionId = data.contribution_id;
+        const dataFormImage = new FormData();
+        dataFormImage.append("contribution_id", contributionId);
+        dataFormImage.append("imageFile", imageFile as Blob);
+
+        const uploadImageResponse = await fetch(
+          `${urlBackend}/contribution/uploadImage/`,
+          {
+            method: "POST",
+            body: dataFormImage,
+          }
+        );
+>>>>>>> Stashed changes
 
           const uploadImageResponse = await fetch(`${urlBackend}/contribution/uploadImage/`, {
             method: "POST",
@@ -824,55 +960,130 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   //End Upload
 
   return (
-    <div className="flex flex-col bg_white">
-      <div className="ml-10 mr-10 max-w-screen-2xl px-6 text-base">
-        <nav className="flex flex-row items-center justify-between p-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xl font-semibold text-sky-950">
-              <div className="flex h-1 w-auto items-center justify-center text-4xl font-black text-sky-1000">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="mr-3 h-10 w-10"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" />
-                </svg>
-                <h1 className="tracking-wide">
-                  UMCMS<span className="font-mono">™</span>
-                </h1>
-              </div>
-            </div>
-            <ul className="hidden flex-wrap items-center justify-center pl-24 text-base md:ml-auto md:mr-auto md:flex">
-              {tabs.map((tab, index) => (
-                <li key={index} className="me-2" role="presentation">
-                  <button
-                    onClick={() => handleClick(index)}
-                    className={`inline-block rounded-t-lg border-b-2 border-transparent p-4 hover:border-red-400 hover:text-gray-600 dark:hover:text-gray-300 ${index === activeTab
+    <div className="bg_white flex flex-col">
+      <nav className="border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between p-4">
+          <div className="text-sky-1000 flex h-1 w-auto items-center justify-center text-4xl font-black">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="mr-3 h-10 w-10 "
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z" />
+            </svg>
+            <h1 className="tracking-wide">
+              UMCMS<span className="font-mono">™</span>
+            </h1>
+          </div>
+          <ul className="hidden flex-wrap items-center justify-center pl-24 text-base md:ml-auto md:mr-auto md:flex">
+            {tabs.map((tab, index) => (
+              <li key={index} className="me-2" role="presentation">
+                <button
+                  onClick={() => handleClick(index)}
+                  className={`inline-block rounded-t-lg border-b-2 border-transparent p-4 hover:border-red-400 hover:text-gray-600 dark:hover:text-gray-300 ${
+                    index === activeTab
                       ? "text-gray-600 dark:text-gray-900"
                       : ""
-                      }`}
-                    id="profile-tab-example"
-                    type="button"
-                    role="tab"
-                    aria-controls="profile-example"
-                    aria-selected={index === activeTab}
-                  >
-                    {tab}
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-          </div>
+                  }`}
+                  id="profile-tab-example"
+                  type="button"
+                  role="tab"
+                  aria-controls="profile-example"
+                  aria-selected={index === activeTab}
+                >
+                  {tab}
+                </button>
+              </li>
+            ))}
+          </ul>
           <button
-            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            className="ease bg_red rounded px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
             onClick={handleLogout}
-          >Logout
+          >
+            Sign out
           </button>
-        </nav>
-      </div>
+          <div className="lg:hidden">
+			<button className="navbar-burger flex items-center text-blue-600 p-3">
+				<svg className="block h-4 w-4 fill-current" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+					<title>Mobile menu</title>
+					<path d="M0 3h20v2H0V3zm0 6h20v2H0V9zm0 6h20v2H0v-2z"></path>
+				</svg>
+			</button>
+		</div>
+    <ul className="hidden absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 lg:flex lg:mx-auto lg:flex lg:items-center lg:w-auto lg:space-x-6">
+			<li><a className="text-sm text-gray-400 hover:text-gray-500" href="#">Home</a></li>
+			<li className="text-gray-300">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" className="w-4 h-4 current-fill" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v0m0 7v0m0 7v0m0-13a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+				</svg>
+			</li>
+			<li><a className="text-sm text-blue-600 font-bold" href="#">About Us</a></li>
+			<li className="text-gray-300">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" className="w-4 h-4 current-fill" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v0m0 7v0m0 7v0m0-13a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+				</svg>
+			</li>
+			<li><a className="text-sm text-gray-400 hover:text-gray-500" href="#">Services</a></li>
+			<li className="text-gray-300">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" className="w-4 h-4 current-fill" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v0m0 7v0m0 7v0m0-13a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+				</svg>
+			</li>
+			<li><a className="text-sm text-gray-400 hover:text-gray-500" href="#">Pricing</a></li>
+			<li className="text-gray-300">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" className="w-4 h-4 current-fill" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v0m0 7v0m0 7v0m0-13a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+				</svg>
+			</li>
+			<li><a className="text-sm text-gray-400 hover:text-gray-500" href="#">Contact</a></li>
+		</ul>
+        </div>
 
+        
+      </nav>
+      <div className="navbar-menu relative z-50 hidden">
+		<div className="navbar-backdrop fixed inset-0 bg-gray-800 opacity-25"></div>
+		<nav className="fixed top-0 left-0 bottom-0 flex flex-col w-5/6 max-w-sm py-6 px-6 bg-white border-r overflow-y-auto">
+			<div className="flex items-center mb-8">
+				<a className="mr-auto text-3xl font-bold leading-none" href="#">
+					<svg className="h-12" viewBox="0 0 10240 10240">
+				        <path xmlns="http://www.w3.org/2000/svg" d="M8284 9162 c-2 -207 -55 -427 -161 -667 -147 -333 -404 -644 -733 -886 -81 -59 -247 -169 -256 -169 -3 0 -18 -9 -34 -20 -26 -19 -344 -180 -354 -180 -3 0 -29 -11 -58 -24 -227 -101 -642 -225 -973 -290 -125 -25 -397 -70 -480 -80 -22 -3 -76 -9 -120 -15 -100 -13 -142 -17 -357 -36 -29 -2 -98 -7 -153 -10 -267 -15 -436 -28 -525 -40 -14 -2 -45 -7 -70 -10 -59 -8 -99 -14 -130 -20 -14 -3 -41 -7 -60 -11 -19 -3 -39 -7 -45 -8 -5 -2 -28 -6 -50 -10 -234 -45 -617 -165 -822 -257 -23 -10 -45 -19 -48 -19 -7 0 -284 -138 -340 -170 -631 -355 -1107 -842 -1402 -1432 -159 -320 -251 -633 -308 -1056 -26 -190 -27 -635 -1 -832 3 -19 7 -59 10 -89 4 -30 11 -84 17 -120 6 -36 12 -77 14 -91 7 -43 33 -174 39 -190 3 -8 7 -28 9 -45 6 -35 52 -221 72 -285 7 -25 23 -79 35 -120 29 -99 118 -283 189 -389 67 -103 203 -244 286 -298 75 -49 178 -103 196 -103 16 0 27 16 77 110 124 231 304 529 485 800 82 124 153 227 157 230 3 3 28 36 54 74 116 167 384 497 546 671 148 160 448 450 560 542 14 12 54 45 90 75 88 73 219 172 313 238 42 29 77 57 77 62 0 5 -13 34 -29 66 -69 137 -149 405 -181 602 -7 41 -14 82 -15 90 -1 8 -6 46 -10 83 -3 37 -8 77 -10 88 -2 11 -7 65 -11 122 -3 56 -8 104 -9 107 -2 3 0 12 5 19 6 10 10 8 15 -10 10 -34 167 -346 228 -454 118 -210 319 -515 340 -515 4 0 40 18 80 40 230 128 521 255 787 343 118 40 336 102 395 113 28 5 53 11 105 23 25 5 59 12 75 15 17 3 41 8 55 11 34 7 274 43 335 50 152 18 372 29 565 29 194 0 481 -11 489 -19 2 -3 -3 -6 -12 -6 -9 -1 -20 -2 -24 -3 -33 -8 -73 -16 -98 -21 -61 -10 -264 -56 -390 -90 -649 -170 -1243 -437 -1770 -794 -60 -41 -121 -82 -134 -93 l-24 -18 124 -59 c109 -52 282 -116 404 -149 92 -26 192 -51 220 -55 17 -3 64 -12 105 -21 71 -14 151 -28 230 -41 19 -3 46 -7 60 -10 14 -2 45 -7 70 -10 25 -4 56 -8 70 -10 14 -2 53 -7 88 -10 35 -4 71 -8 81 -10 10 -2 51 -6 92 -9 101 -9 141 -14 147 -21 3 -3 -15 -5 -39 -6 -24 0 -52 -2 -62 -4 -21 -4 -139 -12 -307 -22 -242 -14 -700 -7 -880 13 -41 4 -187 27 -250 39 -125 23 -274 68 -373 111 -43 19 -81 34 -86 34 -4 0 -16 -8 -27 -17 -10 -10 -37 -33 -59 -52 -166 -141 -422 -395 -592 -586 -228 -257 -536 -672 -688 -925 -21 -36 -43 -66 -47 -68 -4 -2 -8 -7 -8 -11 0 -5 -24 -48 -54 -97 -156 -261 -493 -915 -480 -935 2 -3 47 -21 101 -38 54 -18 107 -36 118 -41 58 -25 458 -138 640 -181 118 -27 126 -29 155 -35 14 -2 45 -9 70 -14 66 -15 137 -28 300 -55 37 -7 248 -33 305 -39 28 -3 84 -9 125 -13 163 -16 792 -8 913 12 12 2 58 9 102 15 248 35 423 76 665 157 58 19 134 46 170 60 86 33 344 156 348 166 2 4 8 7 13 7 14 0 205 116 303 184 180 126 287 216 466 396 282 281 511 593 775 1055 43 75 178 347 225 455 100 227 236 602 286 790 59 220 95 364 120 485 6 28 45 245 50 275 2 14 7 41 10 60 3 19 8 49 10 65 2 17 6 46 9 65 15 100 35 262 40 335 3 39 8 89 10 112 22 225 33 803 21 1043 -3 41 -7 129 -11 195 -3 66 -8 136 -10 155 -2 19 -6 76 -10 125 -3 50 -8 101 -10 115 -2 14 -6 57 -10 95 -7 72 -12 113 -20 175 -2 19 -7 55 -10 80 -6 46 -43 295 -51 340 -2 14 -9 54 -15 90 -5 36 -16 97 -24 135 -8 39 -17 84 -20 100 -12 68 -18 97 -50 248 -19 87 -47 204 -61 260 -14 56 -27 109 -29 117 -30 147 -232 810 -253 832 -4 4 -7 -23 -8 -60z"></path>
+			        </svg>
+				</a>
+				<button className="navbar-close">
+					<svg className="h-6 w-6 text-gray-400 cursor-pointer hover:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					</svg>
+				</button>
+			</div>
+			<div>
+				<ul>
+					<li className="mb-1">
+						<a className="block p-4 text-sm font-semibold text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded" href="#">Home</a>
+					</li>
+					<li className="mb-1">
+						<a className="block p-4 text-sm font-semibold text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded" href="#">About Us</a>
+					</li>
+					<li className="mb-1">
+						<a className="block p-4 text-sm font-semibold text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded" href="#">Services</a>
+					</li>
+					<li className="mb-1">
+						<a className="block p-4 text-sm font-semibold text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded" href="#">Pricing</a>
+					</li>
+					<li className="mb-1">
+						<a className="block p-4 text-sm font-semibold text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded" href="#">Contact</a>
+					</li>
+				</ul>
+			</div>
+			<div className="mt-auto">
+				<div className="pt-6">
+					<a className="block px-4 py-3 mb-3 leading-loose text-xs text-center font-semibold leading-none bg-gray-50 hover:bg-gray-100 rounded-xl" href="#">Sign in</a>
+					<a className="block px-4 py-3 mb-2 leading-loose text-xs text-center text-white font-semibold bg-blue-600 hover:bg-blue-700  rounded-xl" href="#">Sign Up</a>
+				</div>
+			</div>
+		</nav>
+	</div>
       <div>
         {tabs.map((tab, index) => (
           <div
@@ -881,6 +1092,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           >
             {index === 0 && (
               <div>
+<<<<<<< Updated upstream
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
                     <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
@@ -954,6 +1166,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               </div>
             )}
             {index === 1 &&
+=======
+                <Header />
+                <Homepage userId={""} />
+              </div>
+            )}
+            {index === 1 && <div>Content of 1 tab</div>}
+            {index === 2 && (
+>>>>>>> Stashed changes
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
@@ -971,6 +1191,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                 </div>
                 <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
                   <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
+<<<<<<< Updated upstream
                     <div className="mb-0 rounded-t bg_nude px-6 py-6">
                       {notification && (
                         <div
@@ -988,13 +1209,22 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                       )}
                       <div className="flex items-center text-center">
                         <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
+=======
+                    <div className="bg_nude mb-0 rounded-t px-6 py-6">
+                      <div className="flex justify-between text-center ">
+                        <h6 className="text-blueGray-700 text-xl font-bold">
+>>>>>>> Stashed changes
                           My Contribution
                         </h6>
                         <button
                           onClick={() => handleSentFile()}
+<<<<<<< Updated upstream
                           disabled={!agree}
                           className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
                             }`}
+=======
+                          className="bg_blue mr-1 rounded px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+>>>>>>> Stashed changes
                           type="button"
                         >
                           Sent File
@@ -1010,12 +1240,27 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     </div>
                     <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
                       <form>
+<<<<<<< Updated upstream
+=======
+                        {errorMessage && (
+                          <div className="rounded-md border border-yellow-300 bg-yellow-100 p-3 text-sm text-yellow-900">
+                            {errorMessage}
+                          </div>
+                        )}
+>>>>>>> Stashed changes
                         <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
                           <div className="flex flex-wrap">
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
+<<<<<<< Updated upstream
 
                                 <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+=======
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="title"
+                                >
+>>>>>>> Stashed changes
                                   Title:
                                 </label>
                                 <input
@@ -1023,14 +1268,19 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
                                   placeholder="Input Title"
                                   value={titleValue}
-                                  onChange={(e) => setTitleValue(e.target.value)}
+                                  onChange={(e) =>
+                                    setTitleValue(e.target.value)
+                                  }
                                   ref={title}
                                 />
                               </div>
                             </div>
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="description">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="description"
+                                >
                                   Description
                                 </label>
                                 <input
@@ -1038,27 +1288,45 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
                                   placeholder="Input Description"
                                   value={descriptionValue}
-                                  onChange={(e) => setDescriptionValue(e.target.value)}
+                                  onChange={(e) =>
+                                    setDescriptionValue(e.target.value)
+                                  }
                                   ref={description}
                                 />
                               </div>
                             </div>
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="title"
+                                >
                                   Upload Image File
                                 </label>
                                 <div className="mb-8">
-                                  <input type="file" multiple name="imageFiles" id="imageFiles" className="sr-only" onChange={handleImageFileChange} />
-                                  <label htmlFor="imageFiles" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                  <input
+                                    type="file"
+                                    multiple
+                                    name="imageFiles"
+                                    id="imageFiles"
+                                    className="sr-only"
+                                    onChange={handleImageFileChange}
+                                  />
+                                  <label
+                                    htmlFor="imageFiles"
+                                    className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center"
+                                  >
                                     <div>
-                                      <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      <label
+                                        className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                        htmlFor="title"
+                                      >
                                         Drop Image file here
                                       </label>
                                       <span className="mb-2 block text-base font-medium text-[#6B7280]">
                                         Or
                                       </span>
-                                      <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                      <span className="inline-flex rounded border border-[#e0e0e0] px-7 py-2 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
                                       <input
@@ -1077,20 +1345,35 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="title"
+                                >
                                   Upload Word File
                                 </label>
                                 <div className="mb-8">
-                                  <input type="file" name="wordFile" id="wordFile" className="sr-only" onChange={handleWordFileChange} />
-                                  <label htmlFor="wordFile" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                  <input
+                                    type="file"
+                                    name="wordFile"
+                                    id="wordFile"
+                                    className="sr-only"
+                                    onChange={handleWordFileChange}
+                                  />
+                                  <label
+                                    htmlFor="wordFile"
+                                    className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center"
+                                  >
                                     <div>
-                                      <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                      <label
+                                        className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                        htmlFor="title"
+                                      >
                                         Drop Word file here
                                       </label>
                                       <span className="mb-2 block text-base font-medium text-[#6B7280]">
                                         Or
                                       </span>
-                                      <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                      <span className="inline-flex rounded border border-[#e0e0e0] px-7 py-2 text-base font-medium text-[#07074D]">
                                         Browse
                                       </span>
                                       <input
@@ -1109,7 +1392,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="title"
+                                >
                                   Sellected image file:
                                 </label>
                                 {imageFile && <p>{imageFile.name}</p>}
@@ -1118,7 +1404,10 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
                             <div className="w-full px-4 lg:w-6/12">
                               <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="title"
+                                >
                                   Sellected word file:
                                 </label>
                                 {wordFile && <p>{wordFile.name}</p>}
@@ -1196,6 +1485,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                   </div>
                 </div>
               </div>
+<<<<<<< Updated upstream
             }
             {index === 2 &&
               <div>
@@ -1210,6 +1500,149 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     <div className="mt-3 lg:flex lg:justify-start">
                       <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
                       </p>
+=======
+            )}
+            {/* Start View Profile */}
+            {index === 3 && (
+              <div>
+                <div>
+                  <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
+                    <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
+                      <div className="bg_nude mb-0 rounded-t px-6 py-6">
+                        <div className="flex justify-between text-center ">
+                          <h6 className="text-blueGray-700 text-xl font-bold">
+                            My Account
+                          </h6>
+                          {isEditing ? (
+                            <button
+                              className="bg_blue mr-1 rounded px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                              type="button"
+                              onClick={handleSaveProfile}
+                            >
+                              Save
+                            </button>
+                          ) : (
+                            <button
+                              className="bg_blue mr-1 rounded px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                              type="button"
+                              onClick={handleEditProfile}
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
+                        <form>
+                          <h6 className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                            Profile Information
+                          </h6>
+                          <div className="flex flex-wrap">
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="first_name"
+                                >
+                                  First Name
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${
+                                    isEditing ? "" : "cursor-not-allowed"
+                                  }`}
+                                  value={profile.first_name}
+                                  onChange={(e) =>
+                                    setProfile({
+                                      ...profile,
+                                      first_name: e.target.value,
+                                    })
+                                  }
+                                  ref={firstName}
+                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="last_name"
+                                >
+                                  Last Name
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${
+                                    isEditing ? "" : "cursor-not-allowed"
+                                  }`}
+                                  value={profile.last_name}
+                                  onChange={(e) =>
+                                    setProfile({
+                                      ...profile,
+                                      last_name: e.target.value,
+                                    })
+                                  }
+                                  ref={lastName}
+                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="email"
+                                >
+                                  Email Address
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${
+                                    isEditing ? "" : "cursor-not-allowed"
+                                  }`}
+                                  value={profile.email}
+                                  onChange={(e) =>
+                                    setProfile({
+                                      ...profile,
+                                      email: e.target.value,
+                                    })
+                                  }
+                                  ref={email}
+                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
+                                />
+                              </div>
+                            </div>
+                            <div className="w-full px-4 lg:w-6/12">
+                              <div className="relative mb-3 w-full">
+                                <label
+                                  className="text-blueGray-600 mb-2 block text-xs font-bold uppercase"
+                                  htmlFor="phone_number"
+                                >
+                                  Phone Number
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring ${
+                                    isEditing ? "" : "cursor-not-allowed"
+                                  }`}
+                                  value={profile.phone_number}
+                                  onChange={(e) =>
+                                    setProfile({
+                                      ...profile,
+                                      phone_number: e.target.value,
+                                    })
+                                  }
+                                  ref={phoneNumber}
+                                  readOnly={!isEditing} // Sử dụng readOnly để ngăn người dùng chỉnh sửa
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <hr className="border-b-1 border-blueGray-300 mt-6" />
+                        </form>
+                      </div>
+>>>>>>> Stashed changes
                     </div>
                   </div>
                 </div>
@@ -1733,6 +2166,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
               </div>
             )}
           </div>
+<<<<<<< Updated upstream
         ))
         }
       </div >
@@ -1753,7 +2187,13 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       }
 
     </div >
+=======
+        ))}
+      </div>
+    </div>
+>>>>>>> Stashed changes
   );
 };
 
 export default Student;
+export { NavbarScript };
