@@ -66,6 +66,9 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const [userFacultyName, setUserFacultyName] = useState("");
   const [agreeTerm, setAgreeTerm] = useState(false);
 
+  const [cldAvai, setCldAvai] = useState(false);
+  const [fcldAvai, setFcldAvai] = useState(false);
+
   const title = useRef<HTMLInputElement>(null);
   const description = useRef<HTMLInputElement>(null);
 
@@ -391,6 +394,19 @@ const Student: React.FC<NavProps> = ({ userId }) => {
       if (getAcademicYearId.ok) {
         const data = await getAcademicYearId.json();
         setCurrentAcademicYear(data);
+        const closure_date = new Date(data.closure_date);
+        const final_closure_date = new Date(data.final_closure_date);
+        const currentDate = new Date();
+        if (currentDate > closure_date && currentDate < final_closure_date) {
+          setCldAvai(false);
+          setFcldAvai(true);
+        } else if (currentDate < closure_date) {
+          setCldAvai(true);
+          setFcldAvai(true);
+        } else if (currentDate > closure_date && currentDate > final_closure_date) {
+          setCldAvai(false);
+          setFcldAvai(false);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -425,7 +441,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
   const tonggleBack = async () => {
     setEditingContribution(null);
     handleChangeYearNonPublish("");
-  
+
   }
 
   const handleChangeYearNonPublish = (year: string) => {
@@ -971,232 +987,239 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                     </div>
                   </div>
                 </div>
-                <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
-                  <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
-                    <div className="mb-0 rounded-t bg_nude px-6 py-6">
-                      {notification && (
-                        <div
-                          className={`p-3 text-sm rounded-md ${notification.type === "error"
-                            ? "bg-red-100 border border-red-300 text-red-900"
-                            : notification.type === "warning"
-                              ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
-                              : notification.type === "success"
-                                ? "bg-green-100 border border-green-300 text-green-900"
-                                : ""
-                            }`}
-                        >
-                          {notification.message}
+                {cldAvai === true ? (
+                  <div className="mx-auto mt-6 w-full px-4 lg:w-8/12">
+                    <div className=" relative mb-6 flex w-full min-w-0 flex-col break-words rounded-lg border-0 shadow-lg">
+                      <div className="mb-0 rounded-t bg_nude px-6 py-6">
+                        {notification && (
+                          <div
+                            className={`p-3 text-sm rounded-md ${notification.type === "error"
+                              ? "bg-red-100 border border-red-300 text-red-900"
+                              : notification.type === "warning"
+                                ? "bg-yellow-100 border border-yellow-300 text-yellow-900"
+                                : notification.type === "success"
+                                  ? "bg-green-100 border border-green-300 text-green-900"
+                                  : ""
+                              }`}
+                          >
+                            {notification.message}
+                          </div>
+                        )}
+                        <div className="flex items-center text-center">
+                          <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
+                            My Contribution
+                          </h6>
+                          <button
+                            onClick={() => handleSentFile()}
+                            disabled={!agree}
+                            className={`mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
+                              }`}
+                            type="button"
+                          >
+                            Sent File
+                          </button>
+                          <button
+                            onClick={() => resetForm()}
+                            className={`rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
+                            type="button"
+                          >
+                            Clean Form
+                          </button>
                         </div>
-                      )}
-                      <div className="flex items-center text-center">
-                        <h6 className="text-blueGray-700 text-xl font-bold mr-auto">
-                          My Contribution
-                        </h6>
-                        <button
-                          onClick={() => handleSentFile()}
-                          disabled={!agree}
-                          className={`mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
-                            }`}
-                          type="button"
-                        >
-                          Sent File
-                        </button>
-                        <button
-                          onClick={() => resetForm()}
-                          className={`rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
-                          type="button"
-                        >
-                          Clean Form
-                        </button>
                       </div>
-                    </div>
-                    <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
-                      <form>
-                        <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
-                          <div className="flex flex-wrap">
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
+                      <div className="flex-auto px-4 py-10 pt-0 lg:px-10">
+                        <form>
+                          <div className="text-blueGray-400 mb-6 mt-3 text-sm font-bold uppercase">
+                            <div className="flex flex-wrap">
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
 
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                  Title:
-                                </label>
-                                <input
-                                  type="email"
-                                  className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
-                                  placeholder="Input Title"
-                                  value={titleValue}
-                                  onChange={(e) => setTitleValue(e.target.value)}
-                                  ref={title}
-                                />
-                              </div>
-                            </div>
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="description">
-                                  Description
-                                </label>
-                                <input
-                                  type="email"
-                                  className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
-                                  placeholder="Input Description"
-                                  value={descriptionValue}
-                                  onChange={(e) => setDescriptionValue(e.target.value)}
-                                  ref={description}
-                                />
-                              </div>
-                            </div>
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                  Upload Image File
-                                </label>
-                                <div className="mb-8">
-                                  <input type="file" multiple name="imageFiles" id="imageFiles" className="sr-only" onChange={handleImageFileChange} />
-                                  <label htmlFor="imageFiles" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
-                                    <div>
-                                      <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                        Drop Image file here
-                                      </label>
-                                      <span className="mb-2 block text-base font-medium text-[#6B7280]">
-                                        Or
-                                      </span>
-                                      <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
-                                        Browse
-                                      </span>
-                                      <input
-                                        type="file"
-                                        name="imageFiles"
-                                        id="imageFiles"
-                                        className="sr-only"
-                                        accept="image/png, image/jpeg" // Only PNG and JPEG images are allowed to be imported
-                                        onChange={handleImageFileChange}
-                                      />
-                                    </div>
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                    Title:
                                   </label>
+                                  <input
+                                    type="email"
+                                    className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
+                                    placeholder="Input Title"
+                                    value={titleValue}
+                                    onChange={(e) => setTitleValue(e.target.value)}
+                                    ref={title}
+                                  />
                                 </div>
                               </div>
-                            </div>
-
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                  Upload Word File
-                                </label>
-                                <div className="mb-8">
-                                  <input type="file" name="wordFile" id="wordFile" className="sr-only" onChange={handleWordFileChange} />
-                                  <label htmlFor="wordFile" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
-                                    <div>
-                                      <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                        Drop Word file here
-                                      </label>
-                                      <span className="mb-2 block text-base font-medium text-[#6B7280]">
-                                        Or
-                                      </span>
-                                      <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
-                                        Browse
-                                      </span>
-                                      <input
-                                        type="file"
-                                        name="wordFile"
-                                        id="wordFile"
-                                        className="sr-only"
-                                        accept=".docx, .doc" // Chỉ cho phép nhập file Word
-                                        onChange={handleWordFileChange}
-                                      />
-                                    </div>
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="description">
+                                    Description
                                   </label>
+                                  <input
+                                    type="email"
+                                    className="placeholder-blueGray-300 text-blueGray-600 w-full rounded border-0 bg-white px-3 py-3 text-sm shadow transition-all duration-150 ease-linear focus:outline-none focus:ring"
+                                    placeholder="Input Description"
+                                    value={descriptionValue}
+                                    onChange={(e) => setDescriptionValue(e.target.value)}
+                                    ref={description}
+                                  />
                                 </div>
                               </div>
-                            </div>
-
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                  Sellected image file:
-                                </label>
-                                {imageFile && <p>{imageFile.name}</p>}
-                              </div>
-                            </div>
-
-                            <div className="w-full px-4 lg:w-6/12">
-                              <div className="relative mb-3 w-full">
-                                <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
-                                  Sellected word file:
-                                </label>
-                                {wordFile && <p>{wordFile.name}</p>}
-                              </div>
-                            </div>
-                            <div className="relative mb-3 w-full">
-                              {agreeTerm ? (
-                                <div>
-                                  <p onClick={handleStopRead}>
-                                    Close Term And Polices
-                                  </p>
-                                  <div className="terms-container bg-gray-100 border border-gray-300 rounded-lg p-6 my-6">
-                                    <ol className="list-decimal pl-6">
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Accepted File Types:</strong> We only accept Word files (.docx) and PNG images (.png) for submission.
-                                        </p>
-                                      </li>
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Ownership of Content:</strong> You must ensure that you are the author and owner of the submitted content. Plagiarism or submitting content without proper authorization is strictly prohibited.
-                                        </p>
-                                      </li>
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Use of Submitted Content:</strong> By submitting a file, you grant us the non-exclusive right to use, reproduce, and distribute the content for the purpose of evaluating submissions and improving our services.
-                                        </p>
-                                      </li>
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Accuracy of Information:</strong> You are responsible for the accuracy and legality of the content you submit. Any misleading or fraudulent information will result in the rejection of your submission and may lead to further actions.
-                                        </p>
-                                      </li>
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Compliance with Laws:</strong> You must comply with all applicable laws and regulations when submitting content. This includes but is not limited to copyright laws, privacy laws, and laws governing the distribution of sensitive information.
-                                        </p>
-                                      </li>
-                                      <li className="mb-4">
-                                        <p>
-                                          <strong>Indemnification:</strong> You agree to indemnify and hold harmless our organization, its affiliates, and employees from any claims, damages, or liabilities arising out of your submission or violation of these terms and policies.
-                                        </p>
-                                      </li>
-                                      <li>
-                                        <p>
-                                          <strong>Modification of Terms:</strong> We reserve the right to modify these terms and policies at any time without prior notice. It is your responsibility to review these terms periodically for any changes.
-                                        </p>
-                                      </li>
-                                    </ol>
-
-                                    <label className="inline-flex items-center mt-3">
-                                      <input
-                                        type="checkbox"
-                                        className="form-checkbox h-5 w-5 text-gray-600"
-                                        checked={agree}
-                                        onChange={handleAgreeChange}
-                                        disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
-                                      /><p className="pl-2">Agree to term and policies</p>
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                    Upload Image File
+                                  </label>
+                                  <div className="mb-8">
+                                    <input type="file" multiple name="imageFiles" id="imageFiles" className="sr-only" onChange={handleImageFileChange} />
+                                    <label htmlFor="imageFiles" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                      <div>
+                                        <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                          Drop Image file here
+                                        </label>
+                                        <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                                          Or
+                                        </span>
+                                        <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                          Browse
+                                        </span>
+                                        <input
+                                          type="file"
+                                          name="imageFiles"
+                                          id="imageFiles"
+                                          className="sr-only"
+                                          accept="image/png, image/jpeg" // Only PNG and JPEG images are allowed to be imported
+                                          onChange={handleImageFileChange}
+                                        />
+                                      </div>
                                     </label>
                                   </div>
                                 </div>
-                              ) : (
-                                <div>
-                                  <p onClick={handleRead}>
-                                    Read Term And Polices
-                                  </p>
-                                </div>
-                              )}
+                              </div>
 
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                    Upload Word File
+                                  </label>
+                                  <div className="mb-8">
+                                    <input type="file" name="wordFile" id="wordFile" className="sr-only" onChange={handleWordFileChange} />
+                                    <label htmlFor="wordFile" className="relative flex min-h-[200px] items-center justify-center rounded-md border border-dashed border-[#e0e0e0] p-12 text-center">
+                                      <div>
+                                        <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                          Drop Word file here
+                                        </label>
+                                        <span className="mb-2 block text-base font-medium text-[#6B7280]">
+                                          Or
+                                        </span>
+                                        <span className="inline-flex rounded border border-[#e0e0e0] py-2 px-7 text-base font-medium text-[#07074D]">
+                                          Browse
+                                        </span>
+                                        <input
+                                          type="file"
+                                          name="wordFile"
+                                          id="wordFile"
+                                          className="sr-only"
+                                          accept=".docx, .doc" // Chỉ cho phép nhập file Word
+                                          onChange={handleWordFileChange}
+                                        />
+                                      </div>
+                                    </label>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                    Sellected image file:
+                                  </label>
+                                  {imageFile && <p>{imageFile.name}</p>}
+                                </div>
+                              </div>
+
+                              <div className="w-full px-4 lg:w-6/12">
+                                <div className="relative mb-3 w-full">
+                                  <label className="text-blueGray-600 mb-2 block text-xs font-bold uppercase" htmlFor="title">
+                                    Sellected word file:
+                                  </label>
+                                  {wordFile && <p>{wordFile.name}</p>}
+                                </div>
+                              </div>
+                              <div className="relative mb-3 w-full">
+                                {agreeTerm ? (
+                                  <div>
+                                    <p onClick={handleStopRead}>
+                                      Close Term And Polices
+                                    </p>
+                                    <div className="terms-container bg-gray-100 border border-gray-300 rounded-lg p-6 my-6">
+                                      <ol className="list-decimal pl-6">
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Accepted File Types:</strong> We only accept Word files (.docx) and PNG images (.png) for submission.
+                                          </p>
+                                        </li>
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Ownership of Content:</strong> You must ensure that you are the author and owner of the submitted content. Plagiarism or submitting content without proper authorization is strictly prohibited.
+                                          </p>
+                                        </li>
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Use of Submitted Content:</strong> By submitting a file, you grant us the non-exclusive right to use, reproduce, and distribute the content for the purpose of evaluating submissions and improving our services.
+                                          </p>
+                                        </li>
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Accuracy of Information:</strong> You are responsible for the accuracy and legality of the content you submit. Any misleading or fraudulent information will result in the rejection of your submission and may lead to further actions.
+                                          </p>
+                                        </li>
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Compliance with Laws:</strong> You must comply with all applicable laws and regulations when submitting content. This includes but is not limited to copyright laws, privacy laws, and laws governing the distribution of sensitive information.
+                                          </p>
+                                        </li>
+                                        <li className="mb-4">
+                                          <p>
+                                            <strong>Indemnification:</strong> You agree to indemnify and hold harmless our organization, its affiliates, and employees from any claims, damages, or liabilities arising out of your submission or violation of these terms and policies.
+                                          </p>
+                                        </li>
+                                        <li>
+                                          <p>
+                                            <strong>Modification of Terms:</strong> We reserve the right to modify these terms and policies at any time without prior notice. It is your responsibility to review these terms periodically for any changes.
+                                          </p>
+                                        </li>
+                                      </ol>
+
+                                      <label className="inline-flex items-center mt-3">
+                                        <input
+                                          type="checkbox"
+                                          className="form-checkbox h-5 w-5 text-gray-600"
+                                          checked={agree}
+                                          onChange={handleAgreeChange}
+                                          disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                        /><p className="pl-2">Agree to term and policies</p>
+                                      </label>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <p onClick={handleRead}>
+                                      Read Term And Polices
+                                    </p>
+                                  </div>
+                                )}
+
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </form>
+                        </form>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex justify-center mt-5">
+                    <h1 className="border border-gray-700 text-center text-4xl p-2">You cannot contribute anymore!</h1>
+                  </div>
+                )
+                }
               </div>
             }
             {index === 2 &&
@@ -1489,6 +1512,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.5 10l-5 5-5-5h3V4h4v6zm4.5 7H4v2h16v-2z" />
                                   </svg>
                                 </button>
+                                {fcldAvai === true ? (
                                 <button
                                   className="text-gray-600 hover:text-gray-900"
                                   onClick={() => handleEdit(magazine)}
@@ -1497,6 +1521,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
                                   </svg>
                                 </button>
+                                ):(null)}
                                 <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-gray-500 hover:text-gray-700 focus:outline-none">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
