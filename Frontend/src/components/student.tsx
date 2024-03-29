@@ -424,6 +424,8 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
   const tonggleBack = async () => {
     setEditingContribution(null);
+    handleChangeYearNonPublish("");
+  
   }
 
   const handleChangeYearNonPublish = (year: string) => {
@@ -866,7 +868,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
           </div>
           <button
-            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            className="ease rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-gray-600"
             onClick={handleLogout}
           >Logout
           </button>
@@ -928,15 +930,15 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                           </div>
                           <div className="px-3 py-4">
                             <h3 className="text-sm text-gray-500 pb-2">
-                              <span className="bg-indigo-600 py-1 px-2 text-white rounded-lg">
+                              <span className="bg-gray-600 py-1 px-2 text-white rounded-lg">
                                 Author: {publishMagazines.p_first_name + ' ' + publishMagazines.p_last_name}
                               </span>
                             </h3>
-                            <p className="text-base font-semibold text-gray-900 group-hover:text-indigo-600">
+                            <p className="text-base font-semibold text-gray-900 group-hover:text-gray-600">
                               {publishMagazines.sc_article_description}
                             </p>
                             <button
-                              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                               onClick={() => handleFileDownload(publishMagazines.sc_article_content_url)}
                             >
                               <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -993,7 +995,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                         <button
                           onClick={() => handleSentFile()}
                           disabled={!agree}
-                          className={`mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
+                          className={`mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none ${!agree && 'opacity-50 cursor-not-allowed'
                             }`}
                           type="button"
                         >
@@ -1001,7 +1003,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                         </button>
                         <button
                           onClick={() => resetForm()}
-                          className={`rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
+                          className={`rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none`}
                           type="button"
                         >
                           Clean Form
@@ -1476,11 +1478,11 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 <div className="text-sm text-gray-900">{magazine.sc_status}</div>
                               </td>
                               <td className="px-2 py-2 whitespace-wrap relative border-b border-gray-300">
-                                <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-green-500 text-white py-1 px-2 rounded-md">Comment</button>
+                                <button onClick={() => openCommentPopup(magazine.sc_contribution_id)} className="bg-gray-500 text-white py-1 px-2 rounded-md">Comment</button>
                               </td>
                               <td className="px-2 py-2 relative w-1/6 text-center border-b border-gray-300">
                                 <button
-                                  className="text-green-600 hover:text-green-900"
+                                  className="text-gray-600 hover:text-gray-900"
                                   onClick={() => handleFileDownload(magazine.sc_article_content_url)}
                                 >
                                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1488,14 +1490,14 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   </svg>
                                 </button>
                                 <button
-                                  className="text-green-600 hover:text-green-900"
+                                  className="text-gray-600 hover:text-gray-900"
                                   onClick={() => handleEdit(magazine)}
                                 >
                                   <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
                                   </svg>
                                 </button>
-                                <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-red-500 hover:text-red-700 focus:outline-none">
+                                <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-gray-500 hover:text-gray-700 focus:outline-none">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                                   </svg>
@@ -1576,7 +1578,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                                 type="button"
                                 onClick={() => handleSaveProfile()}
                               >
@@ -1666,7 +1668,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                                 type="button"
                                 onClick={() => handleEditProfile(index)}
                               >

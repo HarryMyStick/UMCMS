@@ -129,7 +129,7 @@ const Chat: React.FC<ChatProps> = ({ isOpen, onClose, contribution_id, userId, r
     return (
         <div>
             {isOpen ? (
-                <div className="fixed bottom-7 right-7 w-[25rem] h-[25rem] bg-sky-500 border border-gray-500 rounded-lg p-4">
+                <div className="fixed bottom-7 right-7 w-[25rem] h-[25rem] bg-gray-500 border border-gray-500 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4 text-white">
                         {role === "Student" ? (
                             <div>

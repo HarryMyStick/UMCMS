@@ -216,12 +216,12 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, rol
                                                     <h3 className="mb-2">Enter reply you want to send!</h3>
                                                     <div className="flex space-x-2">
                                                         <input type="text" value={editedStudentReply} onChange={(e) => setEditedStudentReply(e.target.value)} className="border-gray-300 border p-1 flex-1" />
-                                                        <button className="bg-green-500 text-white py-1 px-2 rounded-md" onClick={() => saveEditStudentReply(comment.comment_id)}>Save</button>
-                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={cancelEditStudentReply}>Cancel</button>
+                                                        <button className="bg-gray-500 text-white py-1 px-2 rounded-md" onClick={() => saveEditStudentReply(comment.comment_id)}>Save</button>
+                                                        <button className="bg-gray-500 text-white py-1 px-2 rounded-md" onClick={cancelEditStudentReply}>Cancel</button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <button className="text-blue-500 hover:text-blue-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
+                                                <button className="text-gray-500 hover:text-gray-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
                                             )}
                                         </>
                                     )}
@@ -232,13 +232,13 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, rol
                                                     <h3>Enter comment you want to change!</h3>
                                                     <div className="flex space-x-2">
                                                         <input type="text" value={editedCommentContent} onChange={(e) => setEditedCommentContent(e.target.value)} className="border-gray-300 border p-1 flex-1" />
-                                                        <button className="bg-green-500 text-white py-1 px-2 rounded-md" onClick={() => saveEdit(comment.comment_id)}>Save</button>
-                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={() => deleteComment(comment.comment_id)}>Delete</button>
-                                                        <button className="bg-red-500 text-white py-1 px-2 rounded-md" onClick={cancelEdit}>Cancel</button>
+                                                        <button className="bg-gray-500 text-white py-1 px-2 rounded-md" onClick={() => saveEdit(comment.comment_id)}>Save</button>
+                                                        <button className="bg-gray-500 text-white py-1 px-2 rounded-md" onClick={() => deleteComment(comment.comment_id)}>Delete</button>
+                                                        <button className="bg-gray-500 text-white py-1 px-2 rounded-md" onClick={cancelEdit}>Cancel</button>
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <button className="text-blue-500 hover:text-blue-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
+                                                <button className="text-gray-500 hover:text-gray-700" onClick={() => startEditStudentReply(comment.comment_id, comment.student_reply)}>Edit</button>
                                             )}
                                         </>
                                     )}
@@ -250,7 +250,7 @@ const Comment: React.FC<CommentProps> = ({ isOpen, onClose, contribution_id, rol
                 {role !== 'Student' && ( // Render the "Create" button only if the role is not "Student"
                     <div className="mt-4 flex items-center">
                         <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} className="border-gray-300 border p-2 flex-1" />
-                        <button onClick={() => createComment(newComment)} className="text-white hover:text-blue-700 ml-2 px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-200 border border-blue-500 transition-colors duration-300 ease-in-out">Create</button>
+                        <button onClick={() => createComment(newComment)} className="text-white hover:text-gray-700 ml-2 px-4 py-2 rounded-md bg-gray-500 hover:bg-gray-200 border border-gray-500 transition-colors duration-300 ease-in-out">Create</button>
                     </div>
                 )}
             </div>
