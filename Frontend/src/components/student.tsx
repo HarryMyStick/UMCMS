@@ -886,7 +886,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
           <button
             className="ease rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-gray-600"
             onClick={handleLogout}
-          >Logout
+          >Sign out
           </button>
         </nav>
       </div>
