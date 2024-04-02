@@ -77,12 +77,12 @@ export const Login: NextPage = () => {
   };
 
   return (
-    <div className="bg-gradient-to-tr from-sky-200 to-sky-500">
+    <div className="bg-gradient-to-tr from-white-200 to-white-500">
       <section
         id="login"
         className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-4"
       >
-        <div className="rounded bg-sky-100 p-6">
+        <div className="rounded bg-gray-200 p-6">
           <div className="m-3 flex items-center justify-center text-4xl font-black text-sky-900">
             <svg
               xmlns="http://www.w3.org/2000/svg"

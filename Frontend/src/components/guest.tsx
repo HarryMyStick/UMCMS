@@ -52,7 +52,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
 
 
-  const tabs = ["Home", "Statistical Analysis", "Profile"];
+  const tabs = ["Home", "Statistical Analysis", "Profile", "Help"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
     const tabsLength = tabs.length;
@@ -465,9 +465,9 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
 
           </div>
           <button
-            className="ease rounded bg_red px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-teal-600"
+            className="ease rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 hover:shadow-md focus:outline-none active:bg-gray-600"
             onClick={handleLogout}
-          >Logout
+          >Sign out
           </button>
         </nav>
       </div>
@@ -523,15 +523,15 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                           </div>
                           <div className="px-3 py-4">
                             <h3 className="text-sm text-gray-500 pb-2">
-                              <span className="bg-indigo-600 py-1 px-2 text-white rounded-lg">
+                              <span className="bg-gray-600 py-1 px-2 text-white rounded-lg">
                                 Author: {publishMagazines.p_first_name + ' ' + publishMagazines.p_last_name}
                               </span>
                             </h3>
-                            <p className="text-base font-semibold text-gray-900 group-hover:text-indigo-600">
+                            <p className="text-base font-semibold text-gray-900 group-hover:text-gray-600">
                               {publishMagazines.sc_article_description}
                             </p>
                             <button
-                              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                               onClick={() => handleFileDownload(publishMagazines.sc_article_content_url)}
                             >
                               <svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -640,7 +640,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg_gray_700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                                 type="button"
                                 onClick={() => handleSaveProfile()}
                               >
@@ -730,7 +730,7 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                                 My Account
                               </h6>
                               <button
-                                className="mr-1 rounded bg_blue px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
+                                className="mr-1 rounded bg-gray-700 px-4 py-2 text-xs font-bold uppercase text-white shadow outline-none transition-all duration-150 ease-linear hover:shadow-md focus:outline-none active:bg-pink-600"
                                 type="button"
                                 onClick={() => handleEditProfile()}
                               >
@@ -796,7 +796,87 @@ const Guest: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             )}
+
             {/* End View Profile */}
+            {index == 3 && (
+              <div>
+                <div className="container px-6 py-10 mx-auto">
+                  <div className="lg:flex lg:items-center">
+                    <div className="w-full space-y-12 lg:w-1/2">
+                      <div>
+                        <h1 className="text-3xl font-semibold text-gray-800 capitalize lg:text-4xl dark:text-white">Welcome to <br /> the University Magazine Contribution Management System (UMCMS™)</h1>
+                        <div className="mt-2">
+                          <span className="inline-block w-40 h-1 rounded-full bg-blue-500"></span>
+                          <span className="inline-block w-3 h-1 ml-1 rounded-full bg-blue-500"></span>
+                          <span className="inline-block w-1 h-1 ml-1 rounded-full bg-blue-500"></span>
+                        </div>
+                      </div>
+
+                      <div className="md:flex md:items-start md:-mx-4">
+                        <span className="inline-block p-2 text-blue-500 bg-blue-100 rounded-xl md:mx-4 dark:text-white dark:bg-blue-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                        </span>
+                        <div className="mt-4 md:mx-4 md:mt-0">
+                          <h1 className="text-2xl font-semibold text-gray-700 capitalize dark:text-white">Submission Management</h1>
+                          <p className="mt-3 text-gray-500 dark:text-gray-300">
+                            Students can easily submit articles as Word documents and upload high-quality images directly through the system.Submission is subject to agreeing to predefined Terms and Conditions, ensuring compliance and legal clarity.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="md:flex md:items-start md:-mx-4">
+                        <span className="inline-block p-2 text-blue-500 bg-blue-100 rounded-xl md:mx-4 dark:text-white dark:bg-blue-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                          </svg>
+                        </span>
+                        <div className="mt-4 md:mx-4 md:mt-0">
+                          <h1 className="text-2xl font-semibold text-gray-700 capitalize dark:text-white">Role-Based Access Control</h1>
+                          <p className="mt-3 text-gray-500 dark:text-gray-300">
+                            UMCMS™ accommodates various user roles, including students, faculty marketing coordinators, the University Marketing Manager, guests, and administrators. Each role is assigned specific privileges and responsibilities tailored to their respective functions within the magazine contribution process.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="md:flex md:items-start md:-mx-4">
+                        <span className="inline-block p-2 text-blue-500 bg-blue-100 rounded-xl md:mx-4 dark:text-white dark:bg-blue-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                          </svg>
+                        </span>
+                        <div className="mt-4 md:mx-4 md:mt-0">
+                          <h1 className="text-2xl font-semibold text-gray-700 capitalize dark:text-white">Statistical Analysis</h1>
+                          <p className="mt-3 text-gray-500 dark:text-gray-300">
+                            UMCMS™ offers robust statistical analysis capabilities, providing insights such as the number of contributions per Faculty, helping stakeholders understand participation levels and trends.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="md:flex md:items-start md:-mx-4">
+                        <span className="inline-block p-2 text-blue-500 bg-blue-100 rounded-xl md:mx-4 dark:text-white dark:bg-blue-500">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 18.657A8 8 0 016.343 7.343S7.257 6.257 8 5.5M17.657 18.657L18 18M18 18l.343.343M18 18a8.001 8.001 0 10-7.657 11.314" />
+                          </svg>
+                        </span>
+                        <div className="mt-4 md:mx-4 md:mt-0">
+                          <h1 className="text-2xl font-semibold text-gray-700 capitalize dark:text-white">Responsive Interface</h1>
+                          <p className="mt-3 text-gray-500 dark:text-gray-300">
+                          The system features a responsive and intuitive interface optimized for accessibility across all devices, including mobile phones, tablets, and desktops, ensuring a seamless user experience and convenience.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="w-full mt-12 lg:w-1/2 lg:mt-0 lg:pl-12">
+                      <img src="https://ntthnue.edu.vn/uploads/Images/2017/09/013.jpg" alt="Components" className="object-cover w-full h-64 rounded-md shadow-md lg:h-96" />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
           </div>
         ))}
       </div>
