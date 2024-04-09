@@ -14,7 +14,7 @@ export class Comment extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   comment_id: string;
 
-  @ManyToOne(() => Contribution)
+  @ManyToOne(() => Contribution, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'contribution_id' }) 
   contribution_id: Contribution;
 
