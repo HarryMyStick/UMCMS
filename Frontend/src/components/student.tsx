@@ -1412,70 +1412,70 @@ const Student: React.FC<NavProps> = ({ userId }) => {
 
                                 </div>
                                 <div className="relative mb-3 w-full">
-                                {agreeTerm ? (
-                                  <div>
-                                    <p onClick={handleStopRead}>
-                                      Close Term And Polices
-                                    </p>
-                                    <div className="terms-container bg-gray-100 border border-gray-300 rounded-lg p-6 my-6">
-                                      <ol className="list-decimal pl-6">
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Accepted File Types:</strong> We only accept Word files (.docx) and PNG images (.png) for submission.
-                                          </p>
-                                        </li>
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Ownership of Content:</strong> You must ensure that you are the author and owner of the submitted content. Plagiarism or submitting content without proper authorization is strictly prohibited.
-                                          </p>
-                                        </li>
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Use of Submitted Content:</strong> By submitting a file, you grant us the non-exclusive right to use, reproduce, and distribute the content for the purpose of evaluating submissions and improving our services.
-                                          </p>
-                                        </li>
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Accuracy of Information:</strong> You are responsible for the accuracy and legality of the content you submit. Any misleading or fraudulent information will result in the rejection of your submission and may lead to further actions.
-                                          </p>
-                                        </li>
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Compliance with Laws:</strong> You must comply with all applicable laws and regulations when submitting content. This includes but is not limited to copyright laws, privacy laws, and laws governing the distribution of sensitive information.
-                                          </p>
-                                        </li>
-                                        <li className="mb-4">
-                                          <p>
-                                            <strong>Indemnification:</strong> You agree to indemnify and hold harmless our organization, its affiliates, and employees from any claims, damages, or liabilities arising out of your submission or violation of these terms and policies.
-                                          </p>
-                                        </li>
-                                        <li>
-                                          <p>
-                                            <strong>Modification of Terms:</strong> We reserve the right to modify these terms and policies at any time without prior notice. It is your responsibility to review these terms periodically for any changes.
-                                          </p>
-                                        </li>
-                                      </ol>
+                                  {agreeTerm ? (
+                                    <div>
+                                      <p onClick={handleStopRead}>
+                                        Close Term And Polices
+                                      </p>
+                                      <div className="terms-container bg-gray-100 border border-gray-300 rounded-lg p-6 my-6">
+                                        <ol className="list-decimal pl-6">
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Accepted File Types:</strong> We only accept Word files (.docx) and PNG images (.png) for submission.
+                                            </p>
+                                          </li>
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Ownership of Content:</strong> You must ensure that you are the author and owner of the submitted content. Plagiarism or submitting content without proper authorization is strictly prohibited.
+                                            </p>
+                                          </li>
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Use of Submitted Content:</strong> By submitting a file, you grant us the non-exclusive right to use, reproduce, and distribute the content for the purpose of evaluating submissions and improving our services.
+                                            </p>
+                                          </li>
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Accuracy of Information:</strong> You are responsible for the accuracy and legality of the content you submit. Any misleading or fraudulent information will result in the rejection of your submission and may lead to further actions.
+                                            </p>
+                                          </li>
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Compliance with Laws:</strong> You must comply with all applicable laws and regulations when submitting content. This includes but is not limited to copyright laws, privacy laws, and laws governing the distribution of sensitive information.
+                                            </p>
+                                          </li>
+                                          <li className="mb-4">
+                                            <p>
+                                              <strong>Indemnification:</strong> You agree to indemnify and hold harmless our organization, its affiliates, and employees from any claims, damages, or liabilities arising out of your submission or violation of these terms and policies.
+                                            </p>
+                                          </li>
+                                          <li>
+                                            <p>
+                                              <strong>Modification of Terms:</strong> We reserve the right to modify these terms and policies at any time without prior notice. It is your responsibility to review these terms periodically for any changes.
+                                            </p>
+                                          </li>
+                                        </ol>
 
-                                      <label className="inline-flex items-center mt-3">
-                                        <input
-                                          type="checkbox"
-                                          className="form-checkbox h-5 w-5 text-gray-600"
-                                          checked={agree}
-                                          onChange={handleAgreeChange}
-                                          disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
-                                        /><p className="pl-2">Agree to term and policies</p>
-                                      </label>
+                                        <label className="inline-flex items-center mt-3">
+                                          <input
+                                            type="checkbox"
+                                            className="form-checkbox h-5 w-5 text-gray-600"
+                                            checked={agree}
+                                            onChange={handleAgreeChange}
+                                            disabled={formSent} // Không vô hiệu hóa checkbox sau khi gửi
+                                          /><p className="pl-2">Agree to term and policies</p>
+                                        </label>
+                                      </div>
                                     </div>
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <p onClick={handleRead}>
-                                      Read Term And Polices
-                                    </p>
-                                  </div>
-                                )}
+                                  ) : (
+                                    <div>
+                                      <p onClick={handleRead}>
+                                        Read Term And Polices
+                                      </p>
+                                    </div>
+                                  )}
 
-                              </div>
+                                </div>
                               </div>
                             </div>
                           </form>
@@ -1566,20 +1566,22 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                                   </svg>
                                 </button>
                                 {fcldAvai === true ? (
-                                  <button
-                                    className="text-gray-600 hover:text-gray-900"
-                                    onClick={() => handleEdit(magazine)}
-                                  >
-                                    <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
-                                    </svg>
-                                  </button>
+                                  <>
+                                    <button
+                                      className="text-gray-600 hover:text-gray-900"
+                                      onClick={() => handleEdit(magazine)}
+                                    >
+                                      <svg className="w-5 h-5 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z" />
+                                      </svg>
+                                    </button>
+                                    <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-gray-500 hover:text-gray-700 focus:outline-none">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                      </svg>
+                                    </button>
+                                  </>
                                 ) : (null)}
-                                <button onClick={() => handleDelete(magazine.sc_contribution_id)} className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 flex items-center mx-auto" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                  </svg>
-                                </button>
                               </td>
                               <td className="px-8 py-2 whitespace-wrap relative border-b border-gray-300">
                                 <button onClick={() => openChatPopup(magazine.sc_contribution_id)} className="border border-gray-500 text-white py-1 px-2 rounded-md">
@@ -1877,7 +1879,7 @@ const Student: React.FC<NavProps> = ({ userId }) => {
                         <div className="mt-4 md:mx-4 md:mt-0">
                           <h1 className="text-2xl font-semibold text-gray-700 capitalize dark:text-white">Responsive Interface</h1>
                           <p className="mt-3 text-gray-500 dark:text-gray-300">
-                          The system features a responsive and intuitive interface optimized for accessibility across all devices, including mobile phones, tablets, and desktops, ensuring a seamless user experience and convenience.
+                            The system features a responsive and intuitive interface optimized for accessibility across all devices, including mobile phones, tablets, and desktops, ensuring a seamless user experience and convenience.
                           </p>
                         </div>
                       </div>

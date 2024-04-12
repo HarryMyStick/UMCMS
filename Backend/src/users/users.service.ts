@@ -12,6 +12,8 @@ import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
 import { Profile } from 'src/profile/models/entities/profile.entity';
 import { JwtService } from '@nestjs/jwt';
+import { ValidateDto } from './models/dto/validate.dto';
+import { ForgotPassDto } from './models/dto/forgot-pass.dto';
 
 @Injectable()
 export class UsersService {
@@ -81,6 +83,41 @@ export class UsersService {
     return this.jwtService.sign(payload);
   }
 
+  async validateAccount(validateDto: ValidateDto): Promise<User> {
+    const { username, email } = validateDto;
+
+    const user = await this.usersRepository.findOne({
+      where: { username }
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid username');
+    }
+
+    const profile = await this.profileService.checkAccount(user.user_id, email);
+
+    if (profile === false) {
+      throw new NotFoundException('Validate Failed, Wrong Email!!');
+    } else {
+      return user;
+    }
+  }
+
+  async forgotPassword(forgotPassDto: ForgotPassDto): Promise<User> {
+    const { user_id, password } = forgotPassDto;
+
+    const user = await this.usersRepository.findOne({
+      where: { user_id }
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid User');
+    }
+    user.password = password;
+    await this.usersRepository.save(user);
+    return user;
+  }
+
   async getFacultyByUserId(userId: string): Promise<Faculty> {
     const user = await this.usersRepository.findOne({
       where: { user_id: userId },
@@ -132,7 +169,7 @@ export class UsersService {
       .addSelect(['u', 'p.email'])
       .addSelect(['u', 'p.profile_id'])
       .getRawMany();
-  }  
+  }
 
   async updateUser(updateRoleUserDto: UpdateRoleUserDto): Promise<User> {
     const { user_id, role_name, faculty_name, password, email } = updateRoleUserDto;
