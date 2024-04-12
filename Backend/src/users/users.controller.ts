@@ -8,6 +8,8 @@ import { UpdateRoleUserDto } from './models/dto/update-role-user.dto';
 import { AdminCreateUserDto } from './models/dto/admin-create-user.dto';
 import { Profile } from 'src/profile/models/entities/profile.entity';
 import { ProfileService } from 'src/profile/profile.service';
+import { ValidateDto } from './models/dto/validate.dto';
+import { ForgotPassDto } from './models/dto/forgot-pass.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -26,6 +28,16 @@ export class UsersController {
   async login(@Body() createUserDto: CreateUserDto): Promise<{ token: string }> {
     const token = await this.usersService.login(createUserDto);
     return { token };
+  }
+
+  @Post('validateAccount')
+  validateAccount(@Body() validateDto: ValidateDto): Promise<User> {
+    return this.usersService.validateAccount(validateDto);
+  }
+
+  @Post('forgotPassword')
+  forgotPassword(@Body() forgotPassDto: ForgotPassDto): Promise<User> {
+    return this.usersService.forgotPassword(forgotPassDto);
   }
 
   @Get('getFacultyByUserId/:user_id')

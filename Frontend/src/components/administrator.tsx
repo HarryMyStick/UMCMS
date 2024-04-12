@@ -62,13 +62,16 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
   const [userList, setUserList] = useState<User[]>([]);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editingYearIndex, setEditingYearIndex] = useState<number | null>(null);
+  const [editingFacIndex, setEditingFacIndex] = useState<number | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [createClicked, setCreateClicked] = useState(false);
+  const [createFacClicked, setCreateFacClicked] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newFaculty, setNewFaculty] = useState("");
+  const [newFacultyName, setNewFacultyName] = useState("");
   const [newRole, setNewRole] = useState("");
 
   const generateYears = (): string[] => {
@@ -87,7 +90,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     setYearRange(e.target.value);
   };
 
-  const tabs = ["Manage Closure Date", "Manage Accounts", "Statistical Analysis", "Profile", "Help"];
+  const tabs = ["Manage Closure Date", "Manage Accounts", "Manage Faculty", "Statistical Analysis", "Profile", "Help"];
   const [activeTab, setActiveTab] = useState(() => {
     const storedTabIndex = sessionStorage.getItem("activeTabIndex");
     const tabsLength = tabs.length;
@@ -170,8 +173,24 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     setCreateClicked(true);
   };
 
+  const handleCreateFac = () => {
+    setCreateFacClicked(true);
+  };
+
+  const handleCancelFac = () => {
+    setCreateFacClicked(false);
+  };
+
   const handleCancel = () => {
     setCreateClicked(false);
+  };
+
+  const handleCancelEditFac = () => {
+    setEditingFacIndex(null);
+  };
+
+  const handleEditFac = (index: number) => {
+    setEditingFacIndex(index);
   };
 
   const handleEditProfile = () => {
@@ -199,6 +218,29 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       setEditingRowIndex(null);
       const hashPassword = MD5(password).toString();
       updateAccountRole(user_id, hashPassword, facultyName, roleName, gmail, profile_id);
+    }
+  };
+
+  const handleStopEditFac = async (fac: Faculty) => {
+    try {
+      const response = await fetch(`${urlBackend}/faculty/updateFaculty/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          faculty_id: fac.faculty_id,
+          faculty_name: fac.faculty_name
+        })
+      });
+      if (response.ok) {
+        setEditingFacIndex(null);
+        getAllFaculty();
+      } else if (response.status === 409) {
+        setNotification({ type: "error", message: "This faculty name already exists." });
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
     }
   };
 
@@ -255,6 +297,20 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
         };
       }
       return updatedUserList;
+    });
+  };
+
+  const handleFacChange = (facultyName: string, index: number) => {
+    setFaculties(prevFaculties => {
+      const updatedFaculties = [...prevFaculties];
+      const facToUpdate = updatedFaculties[index];
+      if (facToUpdate) {
+        updatedFaculties[index] = {
+          ...facToUpdate,
+          faculty_name: facultyName,
+        };
+      }
+      return updatedFaculties;
     });
   };
 
@@ -322,6 +378,54 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
+    }
+  }
+
+  const handleSubmitFac = async () => {
+    try {
+      if (!newFacultyName) {
+        setNotification({ type: "error", message: "Please enter enough information." });
+      } else {
+        const response = await fetch(`${urlBackend}/faculty/createFaculty/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            faculty_name: newFacultyName,
+          })
+        });
+        if (response.ok) {
+          setCreateFacClicked(false);
+          getAllFaculty();
+        } else {
+          console.log("Cancelled.");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching faculty data:", error);
+    }
+  }
+  const handleDeleteFac = async (fac: Faculty) => {
+    // Display an alert to confirm deletion
+    if (window.confirm(`Are you sure you want to delete the account for ${fac.faculty_name}?`)) {
+      try {
+        const response = await fetch(`${urlBackend}/faculty/deleteFaculty/${fac.faculty_id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          setEditingFacIndex(null);
+          getAllFaculty();
+        }
+      } catch (error) {
+        console.error("Error fetching faculty data:", error);
+      }
+      console.log(`Deleting faculty ${fac.faculty_name}...`);
+    } else {
+      console.log("Deletion cancelled.");
     }
   }
 
@@ -1376,6 +1480,212 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
             )}
             {index === 2 && (
               <div>
+                <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 mb-2 text-base">
+                  <div className="px-8 lg:px-12">
+                    <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
+                      Manage Faculty &gt;
+                    </p>
+                    <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude text-base">
+                      <div className="flex justify-between items-center">
+                        <h1 className="mt-3 text-3xl font-semibold text-dark md:text-4xl">Manage Faculty Information<span className="bg-darkBlue"></span></h1>
+                        <button
+                          onClick={getAllFaculty}
+                          className="text-white font-bold py-2 px-4 rounded mx-2 inline-flex items-center relative"
+                        >
+                          <span className="text-black text-xl pr-2">Refresh</span>
+                          <svg
+                            className="h-6 w-6 mr-2 transition-transform duration-300 transform hover:rotate-180"
+                            viewBox="0 0 489.698 489.698"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <g>
+                              <g>
+                                <path d="M468.999,227.774c-11.4,0-20.8,8.3-20.8,19.8c-1,74.9-44.2,142.6-110.3,178.9c-99.6,54.7-216,5.6-260.6-61l62.9,13.1
+                                      c10.4,2.1,21.8-4.2,23.9-15.6c2.1-10.4-4.2-21.8-15.6-23.9l-123.7-26c-7.2-1.7-26.1,3.5-23.9,22.9l15.6,124.8
+                                      c1,10.4,9.4,17.7,19.8,17.7c15.5,0,21.8-11.4,20.8-22.9l-7.3-60.9c101.1,121.3,229.4,104.4,306.8,69.3
+                                      c80.1-42.7,131.1-124.8,132.1-215.4C488.799,237.174,480.399,227.774,468.999,227.774z"/>
+                                <path d="M20.599,261.874c11.4,0,20.8-8.3,20.8-19.8c1-74.9,44.2-142.6,110.3-178.9c99.6-54.7,216-5.6,260.6,61l-62.9-13.1
+                                      c-10.4-2.1-21.8,4.2-23.9,15.6c-2.1,10.4,4.2,21.8,15.6,23.9l123.8,26c7.2,1.7,26.1-3.5,23.9-22.9l-15.6-124.8
+                                      c-1-10.4-9.4-17.7-19.8-17.7c-15.5,0-21.8,11.4-20.8,22.9l7.2,60.9c-101.1-121.2-229.4-104.4-306.8-69.2
+                                      c-80.1,42.6-131.1,124.8-132.2,215.3C0.799,252.574,9.199,261.874,20.599,261.874z"/>
+                              </g>
+                            </g>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 lg:flex lg:justify-start">
+                      <p className="text-dark mb-2 mt-1 mt-5 block w-full text-sm md:text-base lg:w-2/3">
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="max-w-screen-xl mx-auto px-4">
+                  <div className="flex justify-end">
+                    {createFacClicked ? (
+                      <div className="inline-flex space-x-2">
+                        <input
+                          type="text"
+                          placeholder="Faculty Name"
+                          value={newFacultyName}
+                          onChange={(e) => setNewFacultyName(e.target.value)}
+                          className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                        />
+                        <button
+                          onClick={handleSubmitFac}
+                          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mx-2"
+                        >
+                          Submit
+                        </button>
+                        <button
+                          onClick={handleCancelFac}
+                          className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mx-2"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleCreateFac}
+                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                      >
+                        Create New Faculty
+                      </button>
+                    )}
+                  </div>
+                  <div className="overflow-x-auto">
+                    {notification && (
+                      <div
+                        className={`my-2 text-sm rounded-md ${notification.type === "error"
+                          ? "bg-red-100 border border-red-300 text-red-900 p-3"
+                          : notification.type === "warning"
+                            ? "bg-yellow-100 border border-yellow-300 text-yellow-900 p-3"
+                            : notification.type === "success"
+                              ? "bg-green-100 border border-green-300 text-green-900 p-3"
+                              : ""
+                          }`}
+                      >
+                        {notification.message}
+                      </div>
+                    )}
+                    <table className="table-auto w-full border-collapse border border-gray-200">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="px-4 py-2">Faculty Name</th>
+                          <th className="px-4 py-2">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {faculties.map((fac, index) => (
+                          <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                             <td className="px-4 py-2 text-center border-b border-gray-300">
+                              {editingFacIndex === index ? (
+                                <input
+                                  type="text"
+                                  value={fac.faculty_name}
+                                  onChange={(e) => handleFacChange(e.target.value, index)}
+                                  className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                />
+                              ) : (
+                                fac.faculty_name
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
+                              {editingFacIndex === index ? (
+                                <div>
+                                  <button
+                                    onClick={() => handleStopEditFac(fac)}
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEditFac}
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div>
+                                  <button
+                                    onClick={() => handleEditFac(index)}
+                                    className="mr-2 text-gray-600 hover:text-gray-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      className="w-5 h-5 mt-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M7.127 22.562l-7.127 1.438 1.438-7.128 5.689 5.69zm1.414-1.414l11.228-11.225-5.69-5.692-11.227 11.227 5.689 5.69zm9.768-21.148l-2.816 2.817 5.691 5.691 2.816-2.819-5.691-5.689z"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteFac(fac)}
+                                    className="text-gray-600 hover:text-gray-900 focus:outline-none"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="h-6 w-6"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+            {index === 3 && (
+              <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
                     <p className="text-dark mb-2 mt-1 pt-2 block w-full text-sm md:text-base">
@@ -1441,7 +1751,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                 </div>
               </div>
             )}
-            {index === 3 && (
+            {index === 4 && (
               <div>
                 <div className="content-wrapper mx-auto max-w-screen-2xl bg_nude px-8 text-base">
                   <div className="px-8 lg:px-12">
@@ -1640,7 +1950,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
               </div>
             )}
             {/* End View Profile */}
-            {index == 4 && (
+            {index === 5 && (
               <div>
                 <div className="container px-6 py-10 mx-auto">
                   <div className="lg:flex lg:items-center">
