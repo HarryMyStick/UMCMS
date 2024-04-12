@@ -87,6 +87,23 @@ export class ContributionController {
   async getContributionByContributionId(@Param('contributionId') contributionId: string): Promise<Contribution> {
     return this.contributionService.getContributionByContributionId(contributionId);
   }
+  
+  @Post('getContributionsWithoutComment')
+  async getContributionsWithoutComment() {
+    try {
+      const counts = await this.contributionService.getContributionsWithoutComment();
+      return {
+        success: true,
+        data: counts,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to fetch contribution counts.',
+        error: error.message,
+      };
+    }
+  }
 
   @Post('updateContribution')
   @UseInterceptors(FileInterceptor('articleFile'))

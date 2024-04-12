@@ -157,6 +157,32 @@ export class ContributionService {
       .getRawMany();
   }
 
+  async getContributionsWithoutComment(): Promise<{ contributionWithoutComment: number, contributionWithoutCommentAfter14Days: number, totalContribution: number }> {
+    const [contributionWithoutComment, contributionWithoutCommentAfter14Days, totalContribution] = await Promise.all([
+      this.contributionRepository
+        .createQueryBuilder('sc')
+        .where('sc.comment = :comment', { comment: 'not comment' })
+        .getCount(),
+
+      this.contributionRepository
+        .createQueryBuilder('sc')
+        .where('sc.comment = :comment', { comment: 'not comment' })
+        .andWhere('sc.submission_date < :date', { date: new Date(new Date().getTime() - 14 * 24 * 60 * 60 * 1000) }) // 14 days ago
+        .getCount(),
+
+      this.contributionRepository
+        .createQueryBuilder('sc')
+        .getCount()
+    ]);
+
+    return {
+      contributionWithoutComment,
+      contributionWithoutCommentAfter14Days,
+      totalContribution
+    };
+  }
+
+
   async getContributionViaUserId(userId: string): Promise<Contribution[]> {
     return this.contributionRepository
       .createQueryBuilder('sc')
@@ -349,7 +375,7 @@ export class ContributionService {
         .addSelect(['sc', 'sc.user_id'])
         .addSelect(['sc', 'p.first_name', 'p.last_name'])
         .getRawMany();
-    }else if(faculty_name !== "default" && year !=="default"){
+    } else if (faculty_name !== "default" && year !== "default") {
       return this.contributionRepository
         .createQueryBuilder('sc')
         .innerJoin('sc.user_id', 'u')
@@ -362,7 +388,7 @@ export class ContributionService {
         .addSelect(['sc', 'sc.user_id'])
         .addSelect(['sc', 'p.first_name', 'p.last_name'])
         .getRawMany();
-    }else{
+    } else {
       const currentYear = new Date().getFullYear().toString();
       return this.contributionRepository
         .createQueryBuilder('sc')
@@ -380,23 +406,44 @@ export class ContributionService {
 
   async statisticContributionPerYear(year: string): Promise<any[]> {
     try {
-      const statistics = await this.contributionRepository
-        .createQueryBuilder('contribution')
-        .select('academic_year.academic_year', 'academicYear')
-        .addSelect('faculty.faculty_name', 'facultyName')
-        .addSelect('COUNT(contribution.contribution_id)', 'contributionCount')
-        .innerJoin('contribution.academic_year_id', 'academic_year')
-        .innerJoin('contribution.user_id', 'user')
-        .innerJoin('user.faculty', 'faculty')
-        // .where('contribution.status = :status', { status: 'Published' })
-        .andWhere('academic_year.academic_year = :year', { year })
-        .groupBy('academic_year.academic_year')
-        .addGroupBy('faculty.faculty_name')
-        .orderBy('academic_year.academic_year')
-        .addOrderBy('faculty.faculty_name')
-        .getRawMany();
+      if (year === 'default') {
+        const statistics = await this.contributionRepository
+          .createQueryBuilder('contribution')
+          .select('academic_year.academic_year', 'academicYear')
+          .addSelect('faculty.faculty_name', 'facultyName')
+          .addSelect('COUNT(contribution.contribution_id)', 'contributionCount')
+          .innerJoin('contribution.academic_year_id', 'academic_year')
+          .innerJoin('contribution.user_id', 'user')
+          .innerJoin('user.faculty', 'faculty')
+          // .where('contribution.status = :status', { status: 'Published' })
+          // .andWhere('academic_year.academic_year = :year', { year })
+          .groupBy('academic_year.academic_year')
+          .addGroupBy('faculty.faculty_name')
+          .orderBy('academic_year.academic_year')
+          .addOrderBy('faculty.faculty_name')
+          .getRawMany();
 
-      return statistics;
+        return statistics;
+      } else {
+        const statistics = await this.contributionRepository
+          .createQueryBuilder('contribution')
+          .select('academic_year.academic_year', 'academicYear')
+          .addSelect('faculty.faculty_name', 'facultyName')
+          .addSelect('COUNT(contribution.contribution_id)', 'contributionCount')
+          .innerJoin('contribution.academic_year_id', 'academic_year')
+          .innerJoin('contribution.user_id', 'user')
+          .innerJoin('user.faculty', 'faculty')
+          // .where('contribution.status = :status', { status: 'Published' })
+          .andWhere('academic_year.academic_year = :year', { year })
+          .groupBy('academic_year.academic_year')
+          .addGroupBy('faculty.faculty_name')
+          .orderBy('academic_year.academic_year')
+          .addOrderBy('faculty.faculty_name')
+          .getRawMany();
+
+        return statistics;
+      }
+
     } catch (error) {
       throw new Error(`Unable to fetch contribution statistics: ${error.message}`);
     }
@@ -404,23 +451,43 @@ export class ContributionService {
 
   async statisticContributorsPerYear(year: string): Promise<any[]> {
     try {
-      const statistics = await this.contributionRepository
-        .createQueryBuilder('contribution')
-        .select('academic_year.academic_year', 'academicYear')
-        .addSelect('faculty.faculty_name', 'facultyName')
-        .addSelect('COUNT(DISTINCT user.user_id)', 'contributorCount') // Count distinct users (contributors)
-        .innerJoin('contribution.academic_year_id', 'academic_year')
-        .innerJoin('contribution.user_id', 'user')
-        .innerJoin('user.faculty', 'faculty')
-        // .where('contribution.status = :status', { status: 'Published' })
-        .andWhere('academic_year.academic_year = :year', { year })
-        .groupBy('academic_year.academic_year')
-        .addGroupBy('faculty.faculty_name')
-        .orderBy('academic_year.academic_year')
-        .addOrderBy('faculty.faculty_name')
-        .getRawMany();
+      if (year === 'default') {
+        const statistics = await this.contributionRepository
+          .createQueryBuilder('contribution')
+          .select('academic_year.academic_year', 'academicYear')
+          .addSelect('faculty.faculty_name', 'facultyName')
+          .addSelect('COUNT(DISTINCT user.user_id)', 'contributorCount') // Count distinct users (contributors)
+          .innerJoin('contribution.academic_year_id', 'academic_year')
+          .innerJoin('contribution.user_id', 'user')
+          .innerJoin('user.faculty', 'faculty')
+          // .where('contribution.status = :status', { status: 'Published' })
+          // .andWhere('academic_year.academic_year = :year', { year })
+          .groupBy('academic_year.academic_year')
+          .addGroupBy('faculty.faculty_name')
+          .orderBy('academic_year.academic_year')
+          .addOrderBy('faculty.faculty_name')
+          .getRawMany();
 
-      return statistics;
+        return statistics;
+      } else {
+        const statistics = await this.contributionRepository
+          .createQueryBuilder('contribution')
+          .select('academic_year.academic_year', 'academicYear')
+          .addSelect('faculty.faculty_name', 'facultyName')
+          .addSelect('COUNT(DISTINCT user.user_id)', 'contributorCount') // Count distinct users (contributors)
+          .innerJoin('contribution.academic_year_id', 'academic_year')
+          .innerJoin('contribution.user_id', 'user')
+          .innerJoin('user.faculty', 'faculty')
+          // .where('contribution.status = :status', { status: 'Published' })
+          .andWhere('academic_year.academic_year = :year', { year })
+          .groupBy('academic_year.academic_year')
+          .addGroupBy('faculty.faculty_name')
+          .orderBy('academic_year.academic_year')
+          .addOrderBy('faculty.faculty_name')
+          .getRawMany();
+
+        return statistics;
+      }
     } catch (error) {
       throw new Error(`Unable to fetch contributor statistics: ${error.message}`);
     }

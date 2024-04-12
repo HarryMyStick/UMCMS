@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Delete, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './models/dto/create-user.dto';
 import { User } from './models/entities/user.entity';
@@ -17,7 +17,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly profileService: ProfileService
-    ) { }
+  ) { }
 
   @Post('register')
   createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
@@ -31,8 +31,16 @@ export class UsersController {
   }
 
   @Post('validateAccount')
-  validateAccount(@Body() validateDto: ValidateDto): Promise<User> {
-    return this.usersService.validateAccount(validateDto);
+  async validateAccount(@Body() validateDto: ValidateDto): Promise<{ code: string, user: User }> {
+    try {
+      const { code, user } = await this.usersService.validateAccount(validateDto);
+      return { code, user };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Post('forgotPassword')

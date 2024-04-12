@@ -112,7 +112,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
     if (editedYear) {
       fetchDataChart(editedYear);
     } else {
-      fetchDataChart('2024');
+      fetchDataChart('default');
     }
     getAllAcademicYear();
   }, []);
@@ -542,6 +542,16 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
         throw new Error('Failed to fetch contribution statistics');
       }
 
+      const contributionWC = await fetch(`${urlBackend}/contribution/getContributionsWithoutComment/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!contributionWC.ok) {
+        throw new Error('Failed to fetch contribution statistics');
+      }
+
       // FETCH CONTRIBUTORS STATISTIC
       const contributorResponse = await fetch(`${urlBackend}/contribution/statisticContributorsPerYear/${year}`, {
         method: "GET",
@@ -552,6 +562,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
       if (!contributorResponse.ok) {
         throw new Error('Failed to fetch contributor statistics');
       }
+
 
       // DECLARE DATA
 
@@ -569,7 +580,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
           const containerChartHTML = `
             <div id="container-chart">
                 <div class="container mx-auto px-4 py-8">
-                    <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                    <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty</h1>
                     <div class="grid grid-cols-1 gap-8">
                         <div class="chart-container">
                             <div class="flex justify-center">
@@ -581,21 +592,33 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                     </div>
                     <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <div class="chart-container">
-                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty</h1>
                             <div class="max-w-sm mx-auto">
                                 <canvas id="myChartPercentages"></canvas>
                             </div>
                         </div>
                         <div class="chart-container">
-                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year ${editedYear == 'default' ? editedYear : '2024'}</h1>
+                            <h1 class="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty</h1>
                             <div class="max-w-sm mx-auto">
                                 <canvas id="myChartContributors"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <h1 class="text-2xl font-semibold text-center my-6">Statistic Based On Number Of Contribution Without Comment - Without Comment After 14 Days</h1>
+                    <div class="grid grid-cols-1 gap-8">
+                        <div class="chart-container">
+                            <div class="flex justify-center">
+                                <div class="w-[800px] mx-auto">
+                                    <canvas id="myChartContributionWC"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         `;
+
+
           containerChart.innerHTML = containerChartHTML;
 
           // RENDER COUNT CONTRIBUTION CHART
@@ -646,6 +669,59 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
               }
             });
           }
+
+          // RENDER CONTRIBUTION WITHOUT COMMENT AND WITHOUT COMMENT AFTER 14 DAYS
+          const dataResponse = await contributionWC.json();
+          const dataWC = dataResponse.data;
+          const contributionDataWC = [
+            { label: 'Contribution Without Comment', count: dataWC.contributionWithoutComment },
+            { label: 'Contribution Without Comment After 14 Days', count: dataWC.contributionWithoutCommentAfter14Days },
+            { label: 'Total Contribution', count: dataWC.totalContribution }
+          ];
+
+          const countsContributionWCChart = contributionDataWC.map(item => item.count);
+          const labelsContributionWCChart = contributionDataWC.map(item => item.label);
+
+          const canvasContributionWC = document.getElementById("myChartContributionWC") as HTMLCanvasElement;
+          if (canvasContributionWC) {
+            Chart.getChart(canvasContributionWC)?.destroy();
+            new Chart(canvasContributionWC, {
+              type: 'bar',
+              data: {
+                labels: labelsContributionWCChart,
+                datasets: [{
+                  label: 'Contribution Count',
+                  data: countsContributionWCChart,
+                  backgroundColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)'
+                  ],
+                  borderColor: [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)'
+                  ],
+                  borderWidth: 1,
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    ticks: {
+                      stepSize: 0
+                    }
+                  }
+                },
+                plugins: {
+                  legend: {
+                    display: false
+                  }
+                }
+              }
+            });
+          }
+
 
           // RENDER COUNT CONTRIBUTION PERCENTAGE CHART
 
@@ -1578,7 +1654,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       <tbody>
                         {faculties.map((fac, index) => (
                           <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                             <td className="px-4 py-2 text-center border-b border-gray-300">
+                            <td className="px-4 py-2 text-center border-b border-gray-300">
                               {editingFacIndex === index ? (
                                 <input
                                   type="text"
@@ -1712,7 +1788,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                         handleYearChange(selectedValue);
                       }}
                     >
-                      <option value="2024">All Year</option>
+                      <option value="default">All Year</option>
                       {academicYearsAR.map((year) => (
                         <option key={year.academic_year_id} value={year.academic_year}>
                           {year.academic_year}
@@ -1722,7 +1798,7 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                   </div>
                   <div id="container-chart">
                     <div className="container mx-auto px-4 py-8">
-                      <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                      <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributions Within Faculty</h1>
                       <div className="grid grid-cols-1 gap-8">
                         <div className="chart-container">
                           <div className="flex justify-center">
@@ -1734,15 +1810,25 @@ const Administrator: React.FC<NavProps> = ({ userId }) => {
                       </div>
                       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                         <div className="chart-container">
-                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Percentage Of Contributions Within Faculty</h1>
                           <div className="max-w-sm mx-auto">
                             <canvas id="myChartPercentages"></canvas>
                           </div>
                         </div>
                         <div className="chart-container">
-                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty In Year {editedYear == 'default' ? editedYear : '2024'}</h1>
+                          <h1 className="text-2xl font-semibold text-center mb-6">Statistic Based On Number Of Contributors Within Faculty</h1>
                           <div className="max-w-sm mx-auto">
                             <canvas id="myChartContributors"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                      <h1 className="text-2xl font-semibold text-center my-6">Statistic Based On Number Of Contribution Without Comment - Without Comment After 14 Days</h1>
+                      <div className="grid grid-cols-1 gap-8">
+                        <div className="chart-container">
+                          <div className="flex justify-center">
+                            <div className="w-[800px] mx-auto">
+                              <canvas id="myChartContributionWC"></canvas>
+                            </div>
                           </div>
                         </div>
                       </div>
