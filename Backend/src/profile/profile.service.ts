@@ -77,4 +77,16 @@ export class ProfileService {
     return profile;
   }
 
+  async checkAccount(userId:string, email: string): Promise<boolean> {
+    const profile = await this.profileRepository.findOne({
+      where: { user: Equal(userId), email: email },
+    });
+
+    if (!profile) {
+      return false;
+    }
+
+    return true;
+  }
+
 }

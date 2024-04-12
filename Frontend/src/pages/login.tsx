@@ -76,6 +76,10 @@ export const Login: NextPage = () => {
     }
   };
 
+  const forgotPass = () => {
+    router.push('/forgotPass');
+  }
+
   return (
     <div className="bg-gradient-to-tr from-white-200 to-white-500">
       <section
@@ -122,6 +126,7 @@ export const Login: NextPage = () => {
               required
               ref={password}
             />
+            <a onClick={forgotPass} className="flex justify-end">Forgot Password</a>
             <button
               className="mt-3 block rounded-md bg-gray-600 px-4 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
               onClick={() => {
