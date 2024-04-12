@@ -30,6 +30,12 @@ import { MailModule } from './mail/mail.module';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'], // Adjust entity path as per your structure
       synchronize: true,
+      ssl: true,
+      extra: {
+        ssl: {
+          rejectUnauthorized: false, // If you're using self-signed certificates, set this to false
+        },
+      },
     }),
     UsersModule,
     RoleModule,
