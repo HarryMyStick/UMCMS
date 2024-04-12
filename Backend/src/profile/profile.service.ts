@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { UpdateProfileDto } from './models/dto/update-profile.dto';
 import { User } from 'src/users/models/entities/user.entity';
 import { Equal } from 'typeorm';
+import axios from 'axios';
 
 @Injectable()
 export class ProfileService {
@@ -77,16 +78,34 @@ export class ProfileService {
     return profile;
   }
 
-  async checkAccount(userId:string, email: string): Promise<boolean> {
+  private generateRandomCode(): string {
+    const length = 6;
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < length; i++) {
+      code += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return code;
+  }
+
+  async checkAccount(userId: string, email: string): Promise<{ success: boolean, code: string }> {
     const profile = await this.profileRepository.findOne({
       where: { user: Equal(userId), email: email },
     });
 
     if (!profile) {
-      return false;
+      return { success: false, code: '' };
     }
 
-    return true;
-  }
+    const code = this.generateRandomCode();
+    const requestBody = {
+      recipientEmail: profile.email,
+      subject: 'UMCMS System - Code To Change Password',
+      message: `You have to enter this code to renew your password, please do not let this code public. Code: ${code}`
+    };
 
+    await axios.post('http://localhost:3001/email/send', requestBody);
+    
+    return { success: true, code };
+  }
 }

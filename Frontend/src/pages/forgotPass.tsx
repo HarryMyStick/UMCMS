@@ -11,10 +11,14 @@ export const ForgotPass: NextPage = () => {
   const router = useRouter();
   const username = useRef<HTMLInputElement>(null);
   const email = useRef<HTMLInputElement>(null);
+  const newCode = useRef<HTMLInputElement>(null);
   const newPassword = useRef<HTMLInputElement>(null);
   const newRePassword = useRef<HTMLInputElement>(null);
+  const [codeValue, setCodeValue] = useState('');
+  const [codeBE, setCodeBE] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [confirmPasswordValue, setConfirmPasswordValue] = useState('');
+  const [askEmail, setAskEmail] = useState(false);
   const [validAccount, setValidAccount] = useState(false);
 
   useEffect(() => {
@@ -27,6 +31,16 @@ export const ForgotPass: NextPage = () => {
   const displayMessage = (type: any, message: any) => {
     setNotification({ type, message });
   };
+
+  const verifyCode = () => {
+    const enteredCode = newCode.current?.value;
+    if (enteredCode === codeBE) {
+      setNotification({ type: "success", message: 'Successfully verify, you can now change your password!!' });
+      setValidAccount(true);
+    }else{
+      setNotification({ type: "error", message: "Wrong code, please check again!." });
+    }
+  }
 
   const checkValidAccount = async () => {
     const fUsername = username.current?.value.trim();
@@ -49,10 +63,12 @@ export const ForgotPass: NextPage = () => {
       });
 
       if (response.ok) {
-        setNotification({ type: "success", message: 'Successfully verify account' });
-        setValidAccount(true);
+        setNotification({ type: "success", message: 'Email successfully sent, check your email and enter the code to continue.' });
+        // setValidAccount(true);
+        setAskEmail(true);
         const data = await response.json();
-        setUserId(data.user_id);
+        setUserId(data.user.user_id);
+        setCodeBE(data.code);
       } else {
         const data = await response.json();
         setNotification({ type: "error", message: `${data.message}` });
@@ -134,73 +150,96 @@ export const ForgotPass: NextPage = () => {
               {notification.message}
             </div>
           )}
-
           < div className="flex flex-col justify-center">
-            {validAccount ? (
+            {!validAccount && (
               <div>
-                < div className="flex flex-col justify-center">
-                  <label className="text-sm font-medium">Password</label>
-                  <input
-                    className="mb-3 mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 px-2 py-1.5 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-                    type="password"
-                    name="password"
-                    placeholder="**********"
-                    value={passwordValue}
-                    onChange={(e) => setPasswordValue(e.target.value)}
-                    required
-                    ref={newPassword}
-                  />
-                  <label className="text-sm font-medium">Confirm Password</label>
-                  <input
-                    className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-                    type="password"
-                    name="confirmpassword"
-                    placeholder="**********"
-                    value={confirmPasswordValue}
-                    onChange={(e) => setConfirmPasswordValue(e.target.value)}
-                    required
-                    ref={newRePassword}
-                  />
-                  <button
-                    className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
-                    onClick={() => {
-                      void addNewPassword();
-                    }}
-                  >
-                    <span id="login_default_state">Change Password</span>
-                  </button>
-                </div>
+                {!askEmail ? (
+                  <div className="flex flex-col justify-center">
+                    <label className="text-sm font-medium">Username</label>
+                    <input
+                      className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
+                      type="text"
+                      name="username"
+                      placeholder="wahyusa"
+                      required
+                      ref={username}
+                    />
+                    <label className="text-sm font-medium">Email</label>
+                    <input
+                      className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
+                      type="email"
+                      name="email"
+                      placeholder="example@gmail.com"
+                      required
+                      ref={email}
+                    />
+                    <button
+                      className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
+                      onClick={() => {
+                        void checkValidAccount();
+                      }}
+                    >
+                      <span id="login_default_state">Verify Account</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col justify-center">
+                    <label className="text-sm font-medium">Regenerate Code - 6 Characters Code</label>
+                    <input
+                      className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
+                      type="text"
+                      name="Code"
+                      placeholder="ABCXYZ"
+                      value={codeValue}
+                      onChange={(e) => setCodeValue(e.target.value)}
+                      required
+                      ref={newCode}
+                    />
+                    <button
+                      className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
+                      onClick={() => {
+                        void verifyCode();
+                      }}
+                    >
+                      <span id="login_default_state">Verify Code</span>
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div>
-                < div className="flex flex-col justify-center">
-                  <label className="text-sm font-medium">Username</label>
-                  <input
-                    className="mb-3 mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 px-2 py-1.5 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-                    type="text"
-                    name="username"
-                    placeholder="wahyusa"
-                    required
-                    ref={username}
-                  />
-                  <label className="text-sm font-medium">Email</label>
-                  <input
-                    className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
-                    type="email"
-                    name="email"
-                    placeholder="example@gmail.com"
-                    required
-                    ref={email}
-                  />
-                  <button
-                    className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
-                    onClick={() => {
-                      void checkValidAccount();
-                    }}
-                  >
-                    <span id="login_default_state">Verify Account</span>
-                  </button>
-                </div>
+            )}
+
+            {validAccount && (
+              <div className="flex flex-col justify-center">
+                <label className="text-sm font-medium">Password</label>
+                <input
+                  className="mb-3 mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 px-2 py-1.5 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
+                  type="password"
+                  name="password"
+                  placeholder="**********"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  required
+                  ref={newPassword}
+                />
+                <label className="text-sm font-medium">Confirm Password</label>
+                <input
+                  className="mb-3 mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm placeholder-gray-400 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:invalid:border-red-500 focus:invalid:ring-red-500"
+                  type="password"
+                  name="confirmpassword"
+                  placeholder="**********"
+                  value={confirmPasswordValue}
+                  onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                  required
+                  ref={newRePassword}
+                />
+                <button
+                  className="mb-3 mt-2 flex items-center justify-center rounded-md bg-gray-600 px-2 py-1.5 font-medium text-gray-100 shadow-lg transition duration-300 hover:bg-gray-700"
+                  onClick={() => {
+                    void addNewPassword();
+                  }}
+                >
+                  <span id="login_default_state">Change Password</span>
+                </button>
               </div>
             )}
             <div className="flex justify-end">

@@ -83,7 +83,7 @@ export class UsersService {
     return this.jwtService.sign(payload);
   }
 
-  async validateAccount(validateDto: ValidateDto): Promise<User> {
+  async validateAccount(validateDto: ValidateDto): Promise<{ code: string, user: User }> {
     const { username, email } = validateDto;
 
     const user = await this.usersRepository.findOne({
@@ -94,13 +94,13 @@ export class UsersService {
       throw new NotFoundException('Invalid username');
     }
 
-    const profile = await this.profileService.checkAccount(user.user_id, email);
+    const profileResult = await this.profileService.checkAccount(user.user_id, email);
 
-    if (profile === false) {
-      throw new NotFoundException('Validate Failed, Wrong Email!!');
-    } else {
-      return user;
+    if (!profileResult.success) {
+      throw new NotFoundException('Validate failed, this is not your email entered in the system for this account!!');
     }
+
+    return { code: profileResult.code, user };
   }
 
   async forgotPassword(forgotPassDto: ForgotPassDto): Promise<User> {
